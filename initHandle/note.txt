@@ -1,0 +1,15 @@
+the delete movie and actor data func can be implemented by taking the 
+update func as a base and just reversing the logical statements, 
+so it would delete stuff or just make a query for that i dunno
+
+left: 
+UNFUCK THE DATES SOMEHOW
+for this getEndpoint must return 2 vals, -1 -2, if any nil -> err then use switch or start from -3
+-2 -1 so the sort is like 
+                          /movie/sort/{param}/{desc,asc}
+
+                          /movie/search/{the name itself} cant be done without lower
+
+figure out how to populate the starring lists with actual names of / actors 
+movies +++
+

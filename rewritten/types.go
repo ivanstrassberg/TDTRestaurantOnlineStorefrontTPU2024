@@ -8,6 +8,8 @@ type Product struct {
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	Stock       int     `json:"stock"`
+	Rating      float64 `json:"rating"`
+	Category_ID int     `json:"category_id"`
 }
 
 type Customer struct {
@@ -16,10 +18,12 @@ type Customer struct {
 	PasswordHash    string    `json:"password_hash"`
 	DeliveryAddress string    `json:"delivery_address"`
 	CreatedAt       time.Time `json:"created_at"`
-	CartID          int       `json:"cart_id"`
 }
 
 type CustomerLR struct {
 	Email        string `json:"email"`
 	PasswordHash string `json:"password_hash"`
+}
+
+type Category struct {
 }

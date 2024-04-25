@@ -8,7 +8,7 @@ import (
 )
 
 type Storage interface {
-	RegisterCustomer(string, string) error
+	RegisterCustomer(string, string) (bool, error)
 	LoginCustomer(string, string) (bool, error)
 	GetCustomers() ([]*Customer, error)
 }
@@ -33,10 +33,12 @@ func NewPostgresStorage() (*PostgresStore, error) {
 }
 
 func (s *PostgresStore) Init() error {
+	fmt.Println("Initializing DB...")
 	s.createProductTable()
 	s.createCustomerTable()
 	// s.createCategoryTable()
-	// s.createCartProductJunctionTable()
+	s.createCartTable()
+	s.createCartProductJunctionTable()
 	// s.createConstraints()
 	return nil
 }
@@ -49,7 +51,8 @@ func (s *PostgresStore) createProductTable() error { // todo add constraints to 
 		price decimal,
 		stock integer,
 		rating decimal,
-		category integer
+		category_id integer,
+		foreign key (category_id) references category(id)
 	)`
 	_, err := s.db.Exec(query)
 	return err
@@ -58,39 +61,67 @@ func (s *PostgresStore) createProductTable() error { // todo add constraints to 
 func (s *PostgresStore) createCustomerTable() error { // todo add constraints to the cart
 	query := `create table if not exists customer (
 		id serial primary key,
-		email varchar(100) not null,
+		email varchar(100) not null unique,
 		password_hash varchar(120) not null,
 		delivery_address varchar(500) default 'none',
-		created_at timestamp default current_timestamp,
-		cart_id int default '-1'
+		created_at timestamp default current_timestamp
+		
+		
 	)`
+	//cart_id int default NULL,
+	//--foreign key (cart_id) references cart(id) ?
 	// fmt.Println(query)
 	// q := `alter table customer add column cart_id int`
 	_, err := s.db.Exec(query)
 	return err
 }
 
+func (s *PostgresStore) createCartTable() error {
+	query := `
+		create table if not exists cart (
+			id serial primary key,
+			customer_id int,
+			foreign key (customer_id) references customer(id) on delete cascade
+		)
+	`
+	_, err := s.db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	triggerQuery :=
+		`
+		CREATE OR REPLACE FUNCTION create_cart_for_customer() 
+		RETURNS trigger AS $$
+		BEGIN
+			INSERT INTO cart (customer_id) VALUES (NEW.id);
+			RETURN NEW;  
+		END;
+		$$ LANGUAGE plpgsql;  
+		
+		CREATE TRIGGER after_customer_insert
+		AFTER INSERT ON customer 
+		FOR EACH ROW  
+		EXECUTE FUNCTION create_cart_for_customer();`
+	_, err = s.db.Exec(triggerQuery)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *PostgresStore) createCategoryTable() error {
 	query := `create table if not exists category (
 		id serial primary key,
-		email varchar(100) not null,
-		password_hash varchar(120) not null,
-		delivery_address varchar(500),
-		created_at timestamp default current_timestamp
+		name varchar(120),
+		description varchar(1000),
+
 		
 	)`
 	_, err := s.db.Exec(query)
-	return err
-}
-
-func (s *PostgresStore) createCartTable() error {
-	query := `create table if not exists cart (
-		id serial primary key,
-		customer_id int,
-		created_at timestamp default current_timestamp,
-		updated_at TIMESTAMP DEFAULT NOW() 
-	)`
-	_, err := s.db.Exec(query)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
@@ -109,20 +140,24 @@ func (s *PostgresStore) createCartProductJunctionTable() error {
 	return nil
 }
 
-func (s *PostgresStore) RegisterCustomer(email string, password string) error {
-	query := `select * from customer where (email = $1)`
-	resp, err := s.db.Query(query, email)
-	fmt.Println((resp))
+func (s *PostgresStore) RegisterCustomer(email string, password string) (bool, error) {
+	// query := `select * from customer where (email = $1)`
+	// resp, err := s.db.Query(query, email)
+	// fmt.Println((resp))
+	check, err := s.ifExists(email)
 	if err != nil {
+		return false, err
+	}
+	if !check {
+		query := `insert into customer (email, password_hash) values ($1,$2)`
+		_, err1 := s.db.Exec(query, email, password)
+		if err1 != nil {
+			return false, err1
+		}
+		return true, nil
+	}
 
-		return err
-	}
-	query = `insert into customer (email, password_hash) values ($1,$2)`
-	_, err1 := s.db.Exec(query, email, password)
-	if err1 != nil {
-		return err1
-	}
-	return nil
+	return false, nil
 }
 
 func (s *PostgresStore) LoginCustomer(email string, password string) (bool, error) {
@@ -135,7 +170,7 @@ func (s *PostgresStore) LoginCustomer(email string, password string) (bool, erro
 		return false, nil
 	}
 	check2, err := s.checkCustomer(email, password)
-	fmt.Println("this is a check", check2)
+	// fmt.Println("this is a check", check2)
 	if err != nil {
 		return false, err
 	}
@@ -143,9 +178,9 @@ func (s *PostgresStore) LoginCustomer(email string, password string) (bool, erro
 	return check2, nil
 }
 
-func (s *PostgresStore) createConstraints() error {
-	return nil
-}
+// func (s *PostgresStore) createConstraints() error {
+// 	return nil
+// }
 
 func (s *PostgresStore) GetCustomers() ([]*Customer, error) {
 	query := `select * from customer`
@@ -174,8 +209,7 @@ func scanIntoCustomer(rows *sql.Rows) (*Customer, error) {
 		&customer.Email,
 		&customer.PasswordHash,
 		&customer.DeliveryAddress,
-		&customer.CreatedAt,
-		&customer.CartID)
+		&customer.CreatedAt)
 
 	return customer, err
 }
@@ -219,3 +253,5 @@ func (s *PostgresStore) checkCustomer(email, password string) (bool, error) {
 	}
 	return true, nil
 }
+
+// func (s *PostgresStore) executeQueryViaDBQuery(query string) {} // todo later

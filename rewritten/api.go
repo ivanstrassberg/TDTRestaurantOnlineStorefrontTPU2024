@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
+	jwt "github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -35,14 +37,19 @@ func (s *APIServer) Run() {
 
 	mux := http.NewServeMux()
 	// mux = corsMiddleware(mx)
-	mux.HandleFunc("/index", makeHTTPHandleFunc(s.handleMain))
-	mux.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin))
-	mux.HandleFunc("/register", makeHTTPHandleFunc(s.handleRegister))
+	mux.HandleFunc("/admin", withJWTauth(makeHTTPHandleFunc(s.handleAdmin)))
+	mux.HandleFunc("/index", withJWTauth(makeHTTPHandleFunc(s.handleMain)))
+	mux.HandleFunc("/login", (makeHTTPHandleFunc(s.handleLogin)))
+	mux.HandleFunc("/register", (makeHTTPHandleFunc(s.handleRegister)))
 
 	log.Println("JSON API server running on port", s.listenAddr)
 	if err := http.ListenAndServe(s.listenAddr, mux); err != nil {
 		log.Fatalf("Error starting server: %s\n", err)
 	}
+}
+
+func (s *APIServer) handleAdmin(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }
 
 func (s *APIServer) handleMain(w http.ResponseWriter, r *http.Request) error {
@@ -69,6 +76,9 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		///
 		///
 		fmt.Println(regReq.Email, regReq.PasswordHash)
+		// hashed, err := HashPassword(regReq.PasswordHash)
+		// todo rework that, return the password, then de-hash and compare
+		//  confirm if all good
 		resp, err := s.store.LoginCustomer(regReq.Email, regReq.PasswordHash)
 		// err := s.store.RegisterCustomer(regReq.Email, regReq.PasswordHash)
 		if err != nil {
@@ -76,18 +86,17 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		}
 		fmt.Println(resp)
 		if resp {
-			WriteJSON(w, http.StatusOK, "exists")
-			return nil
-		}
-		// used to bypass CORS now obsolete
-		// sf, err := json.Marshal(regReq)
-		// if err != nil {
-		// 	return err
-		// }
+			token, err := generateJWT(regReq.Email)
+			if err != nil {
+				return nil
+			}
+			fmt.Println(token)
+			w.Header().Set("X-Authorization", token)
+			return WriteJSON(w, http.StatusOK, regReq.Email)
 
-		// w.Header().Set("Content-Type", "application/json")
-		// w.Write(sf)
-		// return WriteJSON(w, http.StatusNotFound, "not found")
+			// WriteJSON(w, http.StatusOK, "exists")
+			// return nil
+		}
 
 	}
 	return nil
@@ -95,7 +104,7 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 
 func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == "GET" {
-		s.serveFileByURL(w, r)
+		// s.serveFileByURL(w, r)
 	}
 	if r.Method == "POST" {
 		regReq := new(CustomerLR)
@@ -108,12 +117,17 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 		if err != nil {
 			return err
 		}
-		if err := s.store.RegisterCustomer(regReq.Email, ph); err != nil {
+		v, err := s.store.RegisterCustomer(regReq.Email, ph)
+		if err != nil {
 			return err
 		}
-		return WriteJSON(w, http.StatusOK, CustomerLR{
-			regReq.Email, ph,
-		})
+		if v {
+			return WriteJSON(w, http.StatusOK, CustomerLR{
+				regReq.Email, ph,
+			})
+		}
+		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "the username is taken"})
+		return nil
 	}
 	if r.Method == "DELETE" {
 		users, err := s.store.GetCustomers()
@@ -127,8 +141,6 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 
 	return nil
 }
-
-type APIfunc func(http.ResponseWriter, *http.Request) error
 
 func makeHTTPHandleFunc(f APIfunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -173,3 +185,55 @@ func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
+
+func generateJWT(email string) (string, error) {
+	// expirationTime := time.Now().Add(5 * time.Minute)
+	claims := &Claims{
+		Email: email,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Minute * 120).Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(jwtKey))
+
+}
+
+func validateJWT(tokenString string) (*jwt.Token, error) {
+	// secret := os.Getenv("JWT_SECRET")
+	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("wrong")
+		}
+		return []byte(jwtKey), nil
+	})
+}
+
+func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("calling jwt middleware")
+		tokenString := r.Header.Get("X-Authorization")
+		token, err := validateJWT(tokenString)
+		if err != nil {
+			WriteJSON(w, http.StatusForbidden, ApiError{Error: "forbidden"})
+			return
+		}
+		// userID := s.store.GetUserById
+		claims := token.Claims.(jwt.MapClaims)
+		fmt.Println(claims)
+		handleFunc(w, r)
+	}
+}
+
+var jwtKey = []byte("testKey") // later get that to the ENV var
+var tokens []string
+
+type Claims struct {
+	Email string `json:"email"`
+	jwt.StandardClaims
+}
+
+type APIfunc func(http.ResponseWriter, *http.Request) error

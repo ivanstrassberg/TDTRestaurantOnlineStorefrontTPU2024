@@ -1,45 +1,50 @@
-import React, { useState } from 'react'; // Import React and useState hook
+import React, { useState } from 'react';
+import { fetchWithJWT } from './fetchWithJWT'; // Import fetchWithJWT function
 
 const LoginForm = () => {
-  // State variables to hold email and password
   const [email, setEmail] = useState('');
   const [password_hash, setPassword] = useState('');
-  const [message, setMessage] = useState(''); // State variable for status messages
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
 
-    // Send HTTP POST request to the backend
     try {
       const response = await fetch('http://localhost:8080/login', {
-        method: 'POST', // POST request
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json', // JSON data format
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password_hash }), // Data to send
+        body: JSON.stringify({ email, password_hash }),
       });
 
-      if (response.ok) { 
-        setMessage('Login successful'); // Success response
+      if (response.ok) {
+        const data = await response.json(); // Extract response data
+        console.log(data);
+        // Store JWT token in localStorage
+        // if (data.token) {
+        localStorage.setItem('X-Authorization', data); //????
+        setMessage('Login successful');
+        // }
       } else {
         const data = await response.json();
-        setMessage(`Login failed: ${data.message}`); // Handle failure
+        setMessage(`Login failed: ${data.message}`);
       }
     } catch (error) {
-      setMessage(`Error: ${error.message}`); // Handle errors
+      setMessage(`Error: ${error.message}`);
     }
   };
 
   return (
     <div>
-      <h2>Login</h2> {/* Component heading */}
-      <form onSubmit={handleSubmit}> {/* Form submission handler */}
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
         <div>
           <label>Email:</label>
           <input
             type="text"
             value={email}
-            onChange={(e) => setEmail(e.target.value)} // Update state
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <div>
@@ -47,14 +52,14 @@ const LoginForm = () => {
           <input
             type="password"
             value={password_hash}
-            onChange={(e) => setPassword(e.target.value)} // Update state
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <button type="submit">Login</button> {/* Submit button */}
+        <button type="submit">Login</button>
       </form>
       {message && <p>{message}</p>} {/* Display status message */}
     </div>
   );
 };
 
-export default LoginForm; // Export the component
+export default LoginForm;

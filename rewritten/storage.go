@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/lib/pq"
@@ -10,11 +11,57 @@ import (
 type Storage interface {
 	RegisterCustomer(string, string) (bool, error)
 	LoginCustomer(string, string) (bool, error)
-	GetCustomers() ([]*Customer, error)
+	GetFromDB(string) ([]DBEntity, error)
+	GetFromDBByID(string, int) ([]DBEntity, error)
+	AddProduct(string, string, float64, int, int) error
+	// GetCustomers() ([]*Customer, error)
+	DeleteProduct(string) error
+	DeleteCategory(string) error
+	IfExists(string, string, any) (bool, error)
+	AddCategory(string, string) error
 }
+
+type DBEntity interface{}
 
 type PostgresStore struct {
 	db *sql.DB
+}
+
+func (s *PostgresStore) AddProduct(name string, desc string, price float64, stock int, cat_id int) error {
+	query := `insert into product (name, description, price, stock, rating, category_id) values ($1, $2, $3, $4, 0, $5)`
+	_, err := s.db.Query(query, name, desc, price, stock, cat_id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresStore) DeleteProduct(name string) error {
+	query := `delete from product where name = $1`
+	_, err := s.db.Query(query, name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresStore) AddCategory(name string, desc string) error {
+	query := `insert into category (name, description) values ($1, $2)`
+	resp, err := s.db.Query(query, name, desc)
+	if err != nil {
+		return err
+	}
+	fmt.Println(resp)
+	return nil
+}
+
+func (s *PostgresStore) DeleteCategory(name string) error {
+	query := `delete from category where name = $1`
+	_, err := s.db.Query(query, name)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewPostgresStorage() (*PostgresStore, error) {
@@ -36,7 +83,7 @@ func (s *PostgresStore) Init() error {
 	fmt.Println("Initializing DB...")
 	s.createProductTable()
 	s.createCustomerTable()
-	// s.createCategoryTable()
+	s.createCategoryTable()
 	s.createCartTable()
 	s.createCartProductJunctionTable()
 	// s.createConstraints()
@@ -65,13 +112,8 @@ func (s *PostgresStore) createCustomerTable() error { // todo add constraints to
 		password_hash varchar(120) not null,
 		delivery_address varchar(500) default 'none',
 		created_at timestamp default current_timestamp
-		
-		
 	)`
-	//cart_id int default NULL,
-	//--foreign key (cart_id) references cart(id) ?
-	// fmt.Println(query)
-	// q := `alter table customer add column cart_id int`
+
 	_, err := s.db.Exec(query)
 	return err
 }
@@ -114,9 +156,7 @@ func (s *PostgresStore) createCategoryTable() error {
 	query := `create table if not exists category (
 		id serial primary key,
 		name varchar(120),
-		description varchar(1000),
-
-		
+		description varchar(500)
 	)`
 	_, err := s.db.Exec(query)
 	if err != nil {
@@ -127,8 +167,8 @@ func (s *PostgresStore) createCategoryTable() error {
 
 func (s *PostgresStore) createCartProductJunctionTable() error {
 	query := `CREATE TABLE if not exists cart_product (
-		cart_id INTEGER,  
-		product_id INTEGER,  
+		cart_id int,  
+		product_id int,  
 		PRIMARY KEY (cart_id, product_id),  
 		FOREIGN KEY (cart_id) REFERENCES cart(id),  
 		FOREIGN KEY (product_id) REFERENCES product(id)  
@@ -144,7 +184,7 @@ func (s *PostgresStore) RegisterCustomer(email string, password string) (bool, e
 	// query := `select * from customer where (email = $1)`
 	// resp, err := s.db.Query(query, email)
 	// fmt.Println((resp))
-	check, err := s.ifExists(email)
+	check, err := s.IfExists("customer", "email", email)
 	if err != nil {
 		return false, err
 	}
@@ -161,12 +201,12 @@ func (s *PostgresStore) RegisterCustomer(email string, password string) (bool, e
 }
 
 func (s *PostgresStore) LoginCustomer(email string, password string) (bool, error) {
-	check, _ := s.ifExists(email)
+	check, _ := s.IfExists("customer", "email", email)
 	// fmt.Println(check)
 	// if err != nil {
 	// 	return false, err
 	// }
-	if check == false {
+	if !check {
 		return false, nil
 	}
 	check2, err := s.checkCustomer(email, password)
@@ -182,57 +222,179 @@ func (s *PostgresStore) LoginCustomer(email string, password string) (bool, erro
 // 	return nil
 // }
 
-func (s *PostgresStore) GetCustomers() ([]*Customer, error) {
-	query := `select * from customer`
+// func (s *PostgresStore) GetCustomers() ([]*Customer, error) {
+// 	query := `select * from customer`
+// 	rows, err := s.db.Query(query)
+// 	fmt.Println(rows)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+// 	customers := []*Customer{}
+// 	for rows.Next() {
+// 		customer, err := scanIntoCustomer(rows)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		customers = append(customers, customer)
+// 	}
+
+// 	return customers, nil
+// }
+
+func (s *PostgresStore) GetFromDB(table string) ([]DBEntity, error) {
+	validTables := map[string]bool{
+		"customer": true,
+		"product":  true,
+		"category": true,
+	}
+	if !validTables[table] {
+		return nil, fmt.Errorf("invalid table: %s", table)
+	}
+	query := fmt.Sprintf("SELECT * FROM %s", table)
+
 	rows, err := s.db.Query(query)
-	fmt.Println(rows)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	customers := []*Customer{}
-	for rows.Next() {
-		customer, err := scanIntoCustomer(rows)
-		if err != nil {
-			return nil, err
+
+	results := []DBEntity{}
+
+	switch table {
+	case "product":
+		for rows.Next() {
+			product, err := scanIntoProduct(rows)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, product)
 		}
-		customers = append(customers, customer)
+	case "customer":
+		for rows.Next() {
+			customer, err := scanIntoCustomer(rows)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, customer)
+		}
+	case "category":
+		for rows.Next() {
+			category, err := scanIntoCategory(rows)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, category)
+		}
+	default:
+		return nil, errors.New("unknown table: " + table)
 	}
 
-	return customers, nil
+	return results, nil
+}
+
+func (s *PostgresStore) GetFromDBByID(table string, id int) ([]DBEntity, error) {
+	validTables := map[string]bool{
+		"customer": true,
+		"product":  true,
+		"category": true,
+	}
+	if !validTables[table] {
+		return nil, fmt.Errorf("invalid table: %s", table)
+	}
+	query := fmt.Sprintf("SELECT * FROM %s where id = %v", table, id)
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := []DBEntity{}
+
+	switch table {
+	case "product":
+		for rows.Next() {
+			product, err := scanIntoProduct(rows)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, product)
+		}
+	case "customer":
+		for rows.Next() {
+			customer, err := scanIntoCustomer(rows)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, customer)
+		}
+	case "category":
+		for rows.Next() {
+			category, err := scanIntoCategory(rows)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, category)
+		}
+	default:
+		return nil, errors.New("unknown table: " + table)
+	}
+
+	return results, nil
+}
+
+func scanIntoProduct(rows *sql.Rows) (*Product, error) {
+	var product Product
+	err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock, &product.Rating, &product.Category_ID)
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
 }
 
 func scanIntoCustomer(rows *sql.Rows) (*Customer, error) {
-	customer := new(Customer)
-	err := rows.Scan(
-		&customer.ID,
-		&customer.Email,
-		&customer.PasswordHash,
-		&customer.DeliveryAddress,
-		&customer.CreatedAt)
-
-	return customer, err
+	var customer Customer
+	if err := rows.Scan(&customer.ID, &customer.Email, &customer.PasswordHash, &customer.DeliveryAddress, &customer.CreatedAt); err != nil {
+		return nil, err
+	}
+	return &customer, nil
 }
 
-func (s *PostgresStore) ifExists(email string) (bool, error) {
+func scanIntoCategory(rows *sql.Rows) (*Category, error) {
+	var category Category
+	if err := rows.Scan(&category.ID, &category.Name, &category.Description); err != nil {
+		return nil, err
+	}
+	return &category, nil
+}
+
+func (s *PostgresStore) IfExists(table string, column string, target any) (bool, error) {
+	validTables := map[string]bool{
+		"customer": true,
+		"product":  true,
+		"category": true,
+	}
+	if !validTables[table] {
+		return false, fmt.Errorf("invalid table: %s", table)
+	}
+	query := fmt.Sprintf(
+		`SELECT
+		  CASE
+		  	WHEN EXISTS (SELECT 1 FROM %s WHERE %s = $1)
+			THEN 1
+			ELSE 0
+		  END AS exists`,
+		table,
+		column,
+	)
+
 	var exists int
-	query := `
-	select
-	  case
-	  	when exists (select 1 from customer where email = $1)
-		then 1
-		else 0
-	  end as user_exists
-	`
-	err := s.db.QueryRow(query, email).Scan(&exists)
-	// fmt.Println(err, exists, email)
+	err := s.db.QueryRow(query, target).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
-	if exists == 0 {
-		return false, nil
-	}
-	return true, nil
+	return exists == 1, nil
 }
 
 func (s *PostgresStore) checkCustomer(email, password string) (bool, error) {

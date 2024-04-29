@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,16 +30,22 @@ func NewAPIServer(listenAddr string, store Storage, staticDir string) *APIServer
 
 func enableCors(w *http.ResponseWriter) {
 	header := (*w).Header()
-	header.Add("Access-Control-Allow-Origin", "*")
-	header.Add("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
-	header.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+	header.Set("Access-Control-Allow-Origin", "*")
+	header.Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+	header.Set("Access-Control-Allow-Headers", "Content-Type, X-Authorization, X-Requested-With")
+	header.Set("Access-Control-Allow-Credentials", "true")
+	// WriteJSON(*w, http.StatusOK, header)
 }
 func (s *APIServer) Run() {
 
 	mux := http.NewServeMux()
 	// mux = corsMiddleware(mx)
+	mux.HandleFunc("/admin/{action}/{type}", (makeHTTPHandleFunc(s.handleAdmin))) // post: add/delete/update-category/product; get:
 	mux.HandleFunc("/admin", withJWTauth(makeHTTPHandleFunc(s.handleAdmin)))
+	mux.HandleFunc("/products", (makeHTTPHandleFunc(s.handleProducts)))
+	mux.HandleFunc("/product/{id}", (makeHTTPHandleFunc(s.handleProductByID)))
 	mux.HandleFunc("/index", withJWTauth(makeHTTPHandleFunc(s.handleMain)))
+	mux.HandleFunc("/account/{id}", withJWTauth(makeHTTPHandleFunc(s.handleAccount)))
 	mux.HandleFunc("/login", (makeHTTPHandleFunc(s.handleLogin)))
 	mux.HandleFunc("/register", (makeHTTPHandleFunc(s.handleRegister)))
 
@@ -49,6 +56,148 @@ func (s *APIServer) Run() {
 }
 
 func (s *APIServer) handleAdmin(w http.ResponseWriter, r *http.Request) error {
+	// check, _ := validateJWT(r.Header.Get("X-Authorization"))
+	// if isValid := check.Valid; isValid {
+	// 	fmt.Println(isValid, "this bitch works")
+	// }
+
+	// // fmt.Println(isValid, "value check")
+
+	// // fmt.Println(r.Header.Get("X-Authorization"), "A HEADER FUCK")
+	action := r.PathValue("action")
+	typeOf := r.PathValue("type")
+	if r.Method == "GET" {
+		if action == "get" {
+			// switch typeOf {
+			// case "customer":
+			resp, _ := s.store.GetFromDB(typeOf)
+			WriteJSON(w, http.StatusOK, resp)
+			// }
+		}
+	}
+	if r.Method == "POST" {
+		switch action {
+		case "add":
+			// fmt.Println("adding a %s", typeOf)
+			fmt.Printf("adding a ...")
+			switch typeOf {
+			case "product":
+				req := new(Product)
+				err := json.NewDecoder(r.Body).Decode(req)
+				if err != nil {
+					return err
+				}
+				check, _ := s.store.IfExists("product", "name", req.Name)
+				if !check {
+					err := s.store.AddProduct(req.Name, req.Description, req.Price, req.Stock, req.Category_ID)
+					if err != nil {
+						return err
+					}
+					check, _ = s.store.IfExists("product", "name", req.Name)
+					if check {
+						WriteJSON(w, http.StatusAccepted, "product created")
+						return nil
+					}
+				}
+				WriteJSON(w, http.StatusBadRequest, ApiError{Error: "product already exists"})
+				return nil
+			case "category":
+				req := new(ReqCategory)
+				err := json.NewDecoder(r.Body).Decode(req)
+				if err != nil {
+					return err
+				}
+				check, _ := s.store.IfExists("category", "name", req.Name)
+				if !check {
+					err := s.store.AddCategory(req.Name, req.Description)
+					if err != nil {
+						return err
+					}
+					// fmt.Println(resp)
+					check, _ = s.store.IfExists("category", "name", req.Name)
+					if check {
+						WriteJSON(w, http.StatusAccepted, "category created")
+						return nil
+					}
+					WriteJSON(w, http.StatusBadRequest, "something went wrong")
+					return nil
+				}
+				WriteJSON(w, http.StatusBadRequest, ApiError{Error: "category already exists"})
+				return nil
+			}
+		case "delete":
+			fmt.Println("deleting a ...")
+			switch typeOf {
+			case "product":
+				req := new(Product)
+				err := json.NewDecoder(r.Body).Decode(req)
+				if err != nil {
+					return err
+				}
+				check, _ := s.store.IfExists("product", "name", req.Name)
+				if check {
+					err := s.store.DeleteProduct(req.Name)
+					if err != nil {
+						return err
+					}
+					check, _ = s.store.IfExists("product", "name", req.Name)
+					if !check {
+
+						return WriteJSON(w, http.StatusAccepted, "product deleted")
+					}
+				}
+				return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "product does not exist"})
+			case "category":
+				fmt.Println(typeOf)
+			}
+			// default:
+			// 	WriteJSON(w, http.StatusBadRequest, "the action not supported")
+		}
+
+		// WriteJSON(w, http.StatusOK, nil)
+		// fmt.Println(r.Header)
+		// token := r.Header.Get("X-Authorization")
+		// fmt.Println(token)
+		// // }
+
+	}
+	return nil
+}
+
+func (s *APIServer) handleProducts(w http.ResponseWriter, r *http.Request) error {
+	products, err := s.store.GetFromDB("product")
+	if err != nil {
+		return WriteJSON(w, http.StatusBadRequest, "failed to fetch products")
+	}
+
+	// Write products as JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(products)
+	return nil
+}
+
+func (s *APIServer) handleProductByID(w http.ResponseWriter, r *http.Request) error {
+	idStr := r.PathValue("id")
+	// fmt.Println(idStr)
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return err
+	}
+	if check, _ := s.store.IfExists("product", "id", id); !check {
+		WriteJSON(w, http.StatusBadRequest, "does not exist")
+	}
+	product, err := s.store.GetFromDBByID("product", id)
+	if err != nil {
+		return WriteJSON(w, http.StatusBadRequest, "failed to fetch product")
+	}
+
+	// Write products as JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(product)
+	return nil
+}
+
+func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
@@ -60,27 +209,20 @@ func (s *APIServer) handleMain(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
-	// enableCors(&w)
-	// if r.Method == "GET" {
-	// s.serveFileByURL(w, r)
-	// }
 
 	if r.Method == "POST" {
 
-		// fmt.Println("posted")
 		regReq := new(CustomerLR)
 		if err := json.NewDecoder(r.Body).Decode(regReq); err != nil {
 			return err
 		}
-		// customer := new(Customer)
-		///
-		///
+
 		fmt.Println(regReq.Email, regReq.PasswordHash)
 		// hashed, err := HashPassword(regReq.PasswordHash)
 		// todo rework that, return the password, then de-hash and compare
 		//  confirm if all good
 		resp, err := s.store.LoginCustomer(regReq.Email, regReq.PasswordHash)
-		// err := s.store.RegisterCustomer(regReq.Email, regReq.PasswordHash)
+
 		if err != nil {
 			return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "does not exist, or wrong password"})
 		}
@@ -90,22 +232,24 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 			if err != nil {
 				return nil
 			}
-			fmt.Println(token)
+			fmt.Println(token, "<- this mf dont wanna stick to header")
 			w.Header().Set("X-Authorization", token)
-			return WriteJSON(w, http.StatusOK, regReq.Email)
-
+			WriteJSON(w, http.StatusOK, token)
+			return nil
 			// WriteJSON(w, http.StatusOK, "exists")
 			// return nil
 		}
 
 	}
-	return nil
+	return WriteJSON(w, http.StatusNotFound, "http method not supported")
 }
 
 func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error {
-	if r.Method == "GET" {
-		// s.serveFileByURL(w, r)
-	}
+	// if r.Method == "GET" {
+	// 	// s.serveFileByURL(w, r)
+	// 	// fmt.Println(s.store.IfExists("customer", "email", "ias115@tpu.ru"))
+	// 	// err := s.store.RegisterCustomer(regReq.Email, regReq.PasswordHash)
+	// }
 	if r.Method == "POST" {
 		regReq := new(CustomerLR)
 		if err := json.NewDecoder(r.Body).Decode(regReq); err != nil {
@@ -117,27 +261,32 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 		if err != nil {
 			return err
 		}
+		check := isCommonMailDomain(regReq.Email)
+		if regReq.Email == " " || !check {
+			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "wrong email format"})
+			return nil
+		}
 		v, err := s.store.RegisterCustomer(regReq.Email, ph)
 		if err != nil {
 			return err
 		}
 		if v {
 			return WriteJSON(w, http.StatusOK, CustomerLR{
-				regReq.Email, ph,
+				regReq.Email, "",
 			})
 		}
 		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "the username is taken"})
 		return nil
 	}
-	if r.Method == "DELETE" {
-		users, err := s.store.GetCustomers()
-		if err != nil {
-			return err
-		}
-		for i := 0; i < len(users); i++ {
-			fmt.Println(users[i])
-		}
-	}
+	// if r.Method == "DELETE" {
+	// 	users, err := s.store.GetFromDB("customer")
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	for i := 0; i < len(users); i++ {
+	// 		fmt.Println(users[i])
+	// 	}
+	// }
 
 	return nil
 }
@@ -145,6 +294,10 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 func makeHTTPHandleFunc(f APIfunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		enableCors(&w)
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		if err := f(w, r); err != nil {
 			WriteJSON(w, http.StatusBadRequest, ApiError{Error: err.Error()})
 		}
@@ -214,22 +367,35 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("calling jwt middleware")
-		tokenString := r.Header.Get("X-Authorization")
-		token, err := validateJWT(tokenString)
-		if err != nil {
-			WriteJSON(w, http.StatusForbidden, ApiError{Error: "forbidden"})
+		enableCors(&w)
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
 			return
 		}
+		fmt.Println("calling jwt middleware")
+		tokenString := r.Header.Get("X-Authorization")
+		// fmt.Println(tokenString)
+		token, err := validateJWT(tokenString)
+		// fmt.Println(err)
+		if err != nil {
+			WriteJSON(w, http.StatusUnauthorized, ApiError{Error: "forbidden"})
+			return
+		}
+		if token.Valid {
+			WriteJSON(w, http.StatusOK, "Welcome!")
+			handleFunc(w, r)
+			return
+		}
+		WriteJSON(w, http.StatusUnauthorized, ApiError{Error: "forbidden"})
+		return
 		// userID := s.store.GetUserById
-		claims := token.Claims.(jwt.MapClaims)
-		fmt.Println(claims)
-		handleFunc(w, r)
+		// claims := token.Claims.(jwt.MapClaims)
+
 	}
 }
 
 var jwtKey = []byte("testKey") // later get that to the ENV var
-var tokens []string
+// var tokens []string
 
 type Claims struct {
 	Email string `json:"email"`
@@ -237,3 +403,32 @@ type Claims struct {
 }
 
 type APIfunc func(http.ResponseWriter, *http.Request) error
+
+var commonEmailDomains = []string{
+	"gmail.com",
+	"yahoo.com",
+	"outlook.com",
+	"hotmail.com",
+	"live.com",
+	"aol.com",
+	"icloud.com",
+	"mail.ru",
+	"tpu.ru",
+	"inbox.ru",
+}
+
+func isCommonMailDomain(email string) bool {
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return false
+	}
+
+	domain := parts[1]
+	for _, commonDomain := range commonEmailDomains {
+		if strings.EqualFold(domain, commonDomain) {
+			return true
+		}
+	}
+
+	return false
+}

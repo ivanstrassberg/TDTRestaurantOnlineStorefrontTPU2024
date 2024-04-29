@@ -11,7 +11,7 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
+	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
 type APIServer struct {
@@ -78,8 +78,6 @@ func (s *APIServer) handleAdmin(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == "POST" {
 		switch action {
 		case "add":
-			// fmt.Println("adding a %s", typeOf)
-			fmt.Printf("adding a ...")
 			switch typeOf {
 			case "product":
 				req := new(Product)
@@ -216,30 +214,42 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		if err := json.NewDecoder(r.Body).Decode(regReq); err != nil {
 			return err
 		}
-
-		fmt.Println(regReq.Email, regReq.PasswordHash)
+		// password, err := HashPassword(regReq.PasswordHash)
+		// if err != nil {
+		// 	return err
+		// }
+		// fmt.Println(regReq.Email, password)
 		// hashed, err := HashPassword(regReq.PasswordHash)
 		// todo rework that, return the password, then de-hash and compare
 		//  confirm if all good
-		resp, err := s.store.LoginCustomer(regReq.Email, regReq.PasswordHash)
-
+		passDB, err := s.store.GetPassword(regReq.Email)
 		if err != nil {
-			return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "does not exist, or wrong password"})
+			return err
 		}
-		fmt.Println(resp)
-		if resp {
-			token, err := generateJWT(regReq.Email)
+		// fmt.Println(passDB)
+		check := bcrypt.CompareHashAndPassword([]byte(passDB), []byte(regReq.PasswordHash))
+		// check := CheckPasswordHash(regReq.PasswordHash, passDB)
+		// fmt.Println(check)
+		// check := true
+		if check == nil {
+			resp, err := s.store.LoginCustomer(regReq.Email, passDB)
+
 			if err != nil {
+				return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "does not exist, or wrong password"})
+			}
+			fmt.Println(resp)
+			if resp {
+				token, err := generateJWT(regReq.Email)
+				if err != nil {
+					return err
+				}
+				// fmt.Println(token, "<- this mf dont wanna stick to header")
+				w.Header().Set("X-Authorization", token)
+				WriteJSON(w, http.StatusOK, token)
 				return nil
 			}
-			fmt.Println(token, "<- this mf dont wanna stick to header")
-			w.Header().Set("X-Authorization", token)
-			WriteJSON(w, http.StatusOK, token)
-			return nil
-			// WriteJSON(w, http.StatusOK, "exists")
-			// return nil
 		}
-
+		WriteJSON(w, http.StatusOK, "well shit")
 	}
 	return WriteJSON(w, http.StatusNotFound, "http method not supported")
 }
@@ -334,7 +344,7 @@ func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
 }
-func CheckPasswordHash(password, hash string) bool {
+func CheckPasswordHash(hash, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
@@ -344,7 +354,7 @@ func generateJWT(email string) (string, error) {
 	claims := &Claims{
 		Email: email,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 120).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 60).Unix(), // * 60
 		},
 	}
 

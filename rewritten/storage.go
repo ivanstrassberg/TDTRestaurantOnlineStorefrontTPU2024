@@ -15,6 +15,7 @@ type Storage interface {
 	GetFromDBByID(string, int) ([]DBEntity, error)
 	AddProduct(string, string, float64, int, int) error
 	// GetCustomers() ([]*Customer, error)
+	GetPassword(string) (string, error)
 	DeleteProduct(string) error
 	DeleteCategory(string) error
 	IfExists(string, string, any) (bool, error)
@@ -235,15 +236,28 @@ func (s *PostgresStore) RegisterCustomer(email string, password string) (bool, e
 	return false, nil
 }
 
+func (s *PostgresStore) GetPassword(email string) (string, error) {
+	rows, err := s.db.Query("select * from customer where email = $1", email)
+	if err != nil {
+		return " ", err
+	}
+	var ret string
+	for rows.Next() {
+		customer, err := scanIntoCustomer(rows)
+		if err != nil {
+			return " ", err
+		}
+		ret = customer.PasswordHash
+	}
+	return ret, nil
+}
+
 func (s *PostgresStore) LoginCustomer(email string, password string) (bool, error) {
 	check, _ := s.IfExists("customer", "email", email)
-	// fmt.Println(check)
-	// if err != nil {
-	// 	return false, err
-	// }
 	if !check {
 		return false, nil
 	}
+
 	check2, err := s.checkCustomer(email, password)
 	// fmt.Println("this is a check", check2)
 	if err != nil {

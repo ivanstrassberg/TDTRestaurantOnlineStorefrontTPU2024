@@ -34,6 +34,15 @@ type CustomerLR struct {
 	PasswordHash string `json:"password_hash"`
 }
 
+type Order struct {
+	ID         int       `json:"id"`
+	CustomerID int       `json:"customer_id"`
+	Total      float64   `json:"total"`
+	Status     int       `json:"status"`
+	IsCash     bool      `json:"is_cash"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
 type Category struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`

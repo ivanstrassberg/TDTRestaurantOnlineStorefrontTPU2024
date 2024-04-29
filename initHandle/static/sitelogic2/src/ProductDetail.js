@@ -17,7 +17,7 @@ function ProductDetail() {
       });
   }, [id]);
   if (!product) {
-    return <div>Loading...</div>;
+    return <div>Product does not exist</div>;
   }
 
   return (

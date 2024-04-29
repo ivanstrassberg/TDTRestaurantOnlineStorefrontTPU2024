@@ -86,6 +86,9 @@ func (s *PostgresStore) Init() error {
 	s.createCategoryTable()
 	s.createCartTable()
 	s.createCartProductJunctionTable()
+	s.createOrderTable()
+	s.createOrderProductJunctionTable()
+	fmt.Println("DB Initialized.")
 	// s.createConstraints()
 	return nil
 }
@@ -171,6 +174,38 @@ func (s *PostgresStore) createCartProductJunctionTable() error {
 		product_id int,  
 		PRIMARY KEY (cart_id, product_id),  
 		FOREIGN KEY (cart_id) REFERENCES cart(id),  
+		FOREIGN KEY (product_id) REFERENCES product(id)  
+	);`
+	_, err := s.db.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresStore) createOrderTable() error {
+	query := `create table if not exists customer_order (
+		id serial primary key, 
+		customer_id int not null default 0, 
+		foreign key (customer_id) references customer(id),
+		total decimal default 0.0, 
+		status int not null, 
+		is_cash boolean not null default FALSE,
+		created_at timestamp default current_timestamp
+	);`
+	_, err := s.db.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresStore) createOrderProductJunctionTable() error {
+	query := `CREATE TABLE if not exists order_product (
+		order_id int,  
+		product_id int,  
+		PRIMARY KEY (order_id, product_id),  
+		FOREIGN KEY (order_id) REFERENCES customer_order(id),  
 		FOREIGN KEY (product_id) REFERENCES product(id)  
 	);`
 	_, err := s.db.Exec(query)

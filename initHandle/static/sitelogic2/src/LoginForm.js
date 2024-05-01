@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchWithJWT } from './fetchWithJWT'; // Import fetchWithJWT function
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password_hash, setPassword] = useState('');
   const [message, setMessage] = useState('');
-
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -23,8 +24,10 @@ const LoginForm = () => {
         console.log(data);
         // Store JWT token in localStorage
         // if (data.token) {
-        localStorage.setItem('X-Authorization', data); //????
+        localStorage.setItem('X-Authorization', data); 
+        localStorage.setItem('email', email)
         setMessage('Login successful');
+        navigate('/products');
         // }
       } else {
         const data = await response.json();

@@ -27,7 +27,8 @@ const AdminPage = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Authorization': localStorage.getItem('X-Authorization')
+          'X-Authorization': localStorage.getItem('X-Authorization'),
+          'email': localStorage.getItem('email')
         },
         body: JSON.stringify(newProduct), // Convert product data to JSON
       });

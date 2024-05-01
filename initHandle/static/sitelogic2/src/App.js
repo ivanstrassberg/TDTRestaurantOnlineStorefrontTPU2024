@@ -1,24 +1,25 @@
-import React from 'react'; // Import React library
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'; // Import routing components
-import logo from './logo.svg'; // Import a logo resource
+import React from 'react'; 
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'; 
+import logo from './logo.svg'; 
 import './App.css'; // Import styles
-import LoginForm from './LoginForm'; // Import your custom login component
-import AdminPage from './AdminPage'; // Import your new admin page
+import LoginForm from './LoginForm'; 
+import AdminPage from './AdminPage'; 
 // import ProtectedRoute from './ProtectedRoute'; // Import the ProtectedRoute component
 import ProductList from './ProductList';
 import ProductDetail from './ProductDetail';
-
+import RegisterPage from './RegisterPage';
 
 function App() {
   return (
     <Router> {/* Set up the router */}
       <div className="App">
         <header className="App-header"> {/* Header section */}
-          <img src={logo} className="App-logo" alt="logo" /> {/* Logo */}
+          {/* <img src={logo} className="App-logo" alt="logo" /> Logo */}
           <p>
             Welcome to the main page.
             <Link to="/login">Go to Login Page</Link> {/* Navigation link to login */}
             <Link to="/admin">Go to Admin Page</Link> {/* Navigation link to admin */}
+            <Link to="/register">Register!</Link> 
           </p>
         </header>
 
@@ -28,6 +29,7 @@ function App() {
           <Route path="/products" element={<ProductList />} /> {/* Home page showing the product list */}
           <Route path="/product/:id" element={<ProductDetail />} /> {/* Dynamic route for product detail */}
           <Route path="/admin" element={<AdminPage />} /> {}
+          <Route path="/register" element={<RegisterPage />} /> {}
           {/* Add more routes here if needed */}
         </Routes>
       </div>

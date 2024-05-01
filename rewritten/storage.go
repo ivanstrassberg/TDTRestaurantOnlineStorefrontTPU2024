@@ -14,6 +14,7 @@ type Storage interface {
 	GetFromDB(string) ([]DBEntity, error)
 	GetFromDBByID(string, int) ([]DBEntity, error)
 	AddProduct(string, string, float64, int, int) error
+	AddProductToCustomerCart(int, string) (bool, error)
 	// GetCustomers() ([]*Customer, error)
 	GetPassword(string) (string, error)
 	DeleteProduct(string) error
@@ -26,6 +27,11 @@ type DBEntity interface{}
 
 type PostgresStore struct {
 	db *sql.DB
+}
+
+func (s *PostgresStore) AddProductToCustomerCart(id int, email string) (bool, error) {
+
+	return true, nil
 }
 
 func (s *PostgresStore) AddProduct(name string, desc string, price float64, stock int, cat_id int) error {

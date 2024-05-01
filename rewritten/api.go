@@ -43,8 +43,8 @@ func (s *APIServer) Run() {
 	mux.HandleFunc("/admin/{action}/{type}", withJWTauthAdmin(makeHTTPHandleFunc(s.handleAdmin))) // post: add/delete/update-category/product; get:
 	mux.HandleFunc("/admin", withJWTauthAdmin(makeHTTPHandleFunc(s.handleAdmin)))
 	mux.HandleFunc("/products", (makeHTTPHandleFunc(s.handleProducts)))
-	mux.HandleFunc("/cart/{action}/{id}", (makeHTTPHandleFunc(s.handleCartActions)))
-	mux.HandleFunc("/cart", (makeHTTPHandleFunc(s.handleCart)))
+	mux.HandleFunc("/cart/{action}/{id}", withJWTauth(makeHTTPHandleFunc(s.handleCartActions)))
+	mux.HandleFunc("/cart", withJWTauth(makeHTTPHandleFunc(s.handleCart)))
 	mux.HandleFunc("/product/{id}", (makeHTTPHandleFunc(s.handleProductByID)))
 	mux.HandleFunc("/index", withJWTauth(makeHTTPHandleFunc(s.handleMain)))
 	mux.HandleFunc("/account/{id}", withJWTauth(makeHTTPHandleFunc(s.handleAccount)))
@@ -63,11 +63,15 @@ func (s *APIServer) handleCart(w http.ResponseWriter, r *http.Request) error {
 
 func (s *APIServer) handleCartActions(w http.ResponseWriter, r *http.Request) error {
 	action := r.PathValue("action")
-	id := r.PathValue("id")
+	id, _ := strconv.Atoi(r.PathValue("id"))
+	email := r.Header.Get("email")
 	switch action {
 	case "add":
-
+		s.store.AddProductToCustomerCart(id, email)
 	case "delete":
+
+	default:
+		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "action not supported"})
 	}
 
 	return nil

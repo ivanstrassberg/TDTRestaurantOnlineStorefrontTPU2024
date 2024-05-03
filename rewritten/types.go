@@ -43,6 +43,16 @@ type Order struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+type Cart struct {
+	ID         int `json:"id"`
+	CustomerID int `json:"customer_id"`
+}
+
+type CartProduct struct {
+	CartID    int `json:"cart_id"`
+	ProductID int `json:"customer_id"`
+}
+
 type Category struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`

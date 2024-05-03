@@ -14,6 +14,9 @@ type Storage interface {
 	GetFromDB(string) ([]DBEntity, error)
 	GetFromDBByID(string, int) ([]DBEntity, error)
 	AddProduct(string, string, float64, int, int) error
+	AddProductToCustomerCart(int, string) (bool, error)
+	RemoveProductFromCustomerCart(int, string) (bool, error)
+	GetCartProducts(string) ([]DBEntity, error)
 	// GetCustomers() ([]*Customer, error)
 	GetPassword(string) (string, error)
 	DeleteProduct(string) error
@@ -26,6 +29,41 @@ type DBEntity interface{}
 
 type PostgresStore struct {
 	db *sql.DB
+}
+
+func (s *PostgresStore) AddProductToCustomerCart(id int, email string) (bool, error) {
+	// query := `insert into cart_product (cart_id, product_id) values
+	// ((select cart.id from cart where cart.customer_id =
+	// (select customer.id from customer where customer.email = $1)),$2)
+	// `
+	query := `insert into cart_product (cart_id, product_id) 
+	values 
+	((select cart.id from cart where cart.customer_id = 
+	(select customer.id from customer where customer.email = $1)),
+	(select product.id from product where product.id = $2))`
+	_, err := s.db.Exec(query, email, id)
+	if err != nil {
+		return false, err
+	}
+	// resp := s.IfExists("cart_product")
+	return true, nil
+}
+
+func (s *PostgresStore) RemoveProductFromCustomerCart(id int, email string) (bool, error) {
+	query := `DELETE FROM cart_product 
+	where product_id = $1 and 
+	cart_id = (
+		SELECT id FROM cart 
+		WHERE customer_id = (
+			SELECT id FROM customer 
+			WHERE email = $2
+		)
+	)`
+	_, err := s.db.Exec(query, id, email)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (s *PostgresStore) AddProduct(name string, desc string, price float64, stock int, cat_id int) error {
@@ -216,10 +254,51 @@ func (s *PostgresStore) createOrderProductJunctionTable() error {
 	return nil
 }
 
+func (s *PostgresStore) GetCartProducts(email string) ([]DBEntity, error) {
+
+	var cartID int
+	err := s.db.QueryRow(`
+        SELECT cart.id
+        FROM cart
+        JOIN customer ON cart.customer_id = customer.id
+        WHERE customer.email = $1
+    `, email).Scan(&cartID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := s.db.Query(`
+        SELECT product.id, product.name, product.description, product.price, product.stock, product.rating, product.category_id
+        FROM cart_product
+        JOIN product ON cart_product.product_id = product.id
+        WHERE cart_product.cart_id = $1
+    `, cartID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	products := []DBEntity{}
+	//
+	for rows.Next() {
+		product, err := scanIntoProduct(rows)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+
+	return products, nil
+	// for rows.Next() {
+	// 	var product Product
+	// 	if err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock, &product.Rating, &product.Category_ID); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	products = append(products, product)
+	// }
+	// fmt.Println(products)
+	// return products, nil
+}
+
 func (s *PostgresStore) RegisterCustomer(email string, password string) (bool, error) {
-	// query := `select * from customer where (email = $1)`
-	// resp, err := s.db.Query(query, email)
-	// fmt.Println((resp))
 	check, err := s.IfExists("customer", "email", email)
 	if err != nil {
 		return false, err

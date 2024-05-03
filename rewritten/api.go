@@ -43,8 +43,10 @@ func (s *APIServer) Run() {
 	mux.HandleFunc("/admin/{action}/{type}", withJWTauthAdmin(makeHTTPHandleFunc(s.handleAdmin))) // post: add/delete/update-category/product; get:
 	mux.HandleFunc("/admin", withJWTauthAdmin(makeHTTPHandleFunc(s.handleAdmin)))
 	mux.HandleFunc("/products", (makeHTTPHandleFunc(s.handleProducts)))
-	mux.HandleFunc("/cart/{action}/{id}", (makeHTTPHandleFunc(s.handleCartActions)))
-	mux.HandleFunc("/cart", (makeHTTPHandleFunc(s.handleCart)))
+	mux.HandleFunc("/cart/{action}/{id}", withJWTauth(makeHTTPHandleFunc(s.handleCartActions))) // handle cart as a collection of methods, used to operate it
+
+	// handle the user cart as a collection of products
+	mux.HandleFunc("/cart", withJWTauth(makeHTTPHandleFunc(s.handleCart)))
 	mux.HandleFunc("/product/{id}", (makeHTTPHandleFunc(s.handleProductByID)))
 	mux.HandleFunc("/index", withJWTauth(makeHTTPHandleFunc(s.handleMain)))
 	mux.HandleFunc("/account/{id}", withJWTauth(makeHTTPHandleFunc(s.handleAccount)))
@@ -58,16 +60,46 @@ func (s *APIServer) Run() {
 }
 
 func (s *APIServer) handleCart(w http.ResponseWriter, r *http.Request) error {
+	email := r.Header.Get("email")
+	productList, err := s.store.GetCartProducts(email)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, ApiError{Error: "something went wrong during cart handling"})
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(productList)
+	// WriteJSON(w, http.StatusOK, "products listed")
 	return nil
 }
 
 func (s *APIServer) handleCartActions(w http.ResponseWriter, r *http.Request) error {
 	action := r.PathValue("action")
-	id := r.PathValue("id")
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, "id is not a numeric value")
+	}
+	email := r.Header.Get("email")
 	switch action {
 	case "add":
-
+		answ, err := s.store.AddProductToCustomerCart(id, email)
+		if err != nil {
+			return err
+		}
+		if !answ {
+			WriteJSON(w, http.StatusBadRequest, "something went wrong")
+		}
+		WriteJSON(w, http.StatusOK, "product added")
 	case "delete":
+		answ, err := s.store.RemoveProductFromCustomerCart(id, email)
+		if err != nil {
+			return err
+		}
+		if !answ {
+			WriteJSON(w, http.StatusBadRequest, "something went wrong")
+		}
+		WriteJSON(w, http.StatusOK, "product removed")
+	default:
+		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "action not supported"})
 	}
 
 	return nil
@@ -334,6 +366,11 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
 }
+func WriteJSONResponseless(w http.ResponseWriter, status int) error {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(status)
+	return nil
+}
 
 type ApiError struct {
 	Error string `json:"error"`
@@ -415,7 +452,7 @@ func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 		// fmt.Println(emailString, checkEmail, "check if email's the same")
 
 		if emailString == checkEmail && token.Valid {
-			WriteJSON(w, http.StatusOK, "Welcome!")
+			WriteJSONResponseless(w, http.StatusOK)
 			handleFunc(w, r)
 			return
 		}
@@ -444,7 +481,7 @@ func withJWTauthAdmin(handleFunc http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if emailString == checkEmail && checkEmail == "admin@gmail.com" && token.Valid {
-			WriteJSON(w, http.StatusOK, "Welcome!")
+			// WriteJSON(w, http.StatusOK, "Welcome!")
 			handleFunc(w, r)
 			return
 		}

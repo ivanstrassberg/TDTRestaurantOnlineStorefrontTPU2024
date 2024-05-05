@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+
 const CartPage = () => {
+
   const [products, setProducts] = useState([]);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -16,6 +18,9 @@ const CartPage = () => {
       },
     })
       .then((response) => {
+        if (response.status === 401) {
+            navigate('/unauthorized');
+        }
         if (!response.ok) {
           throw new Error(`Failed to fetch cart: ${response.status}`);
         }
@@ -35,7 +40,9 @@ const CartPage = () => {
         setProducts(initializedProducts);
       })
       .catch((err) => {
-        setError(err.message);
+
+            setError(err.message); // Set other errors
+          
       });
   }, []);
 

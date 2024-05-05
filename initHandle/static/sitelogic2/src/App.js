@@ -9,6 +9,7 @@ import ProductList from './ProductList';
 import ProductDetail from './ProductDetail';
 import RegisterPage from './RegisterPage';
 import CartPage from './CustomerCart';
+import UnauthorizedPage from './UnauthorizedPage'; 
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Routes> {/* Define routes */}
           <Route path="/cart" element={<CartPage />} /> {/* Cart page */}
           <Route path="/login" element={<LoginForm />} /> {/* Route for login */}
+          <Route path="/unauthorized" element={<UnauthorizedPage />} /> {/* Unauthorized route */}
           {/* <ProtectedRoute exact path="/admin" component={AdminPage} /> Protected Route */}
           <Route path="/products" element={<ProductList />} /> {/* Home page showing the product list */}
           <Route path="/product/:id" element={<ProductDetail />} /> {/* Dynamic route for product detail */}

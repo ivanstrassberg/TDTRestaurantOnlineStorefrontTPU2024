@@ -3,7 +3,9 @@
 Перед работой самостоятельно скачать: golang, postgres, react\
 connStr := "_user=postgres port=5433_ _dbname=foodMarket_ _password=root_ sslmode=disable"\
 в файле storage.go найти строку выше, и поменять данные на свои кроме последнего параметра. \
-
+// store.SeedWithData("/Users/ivansilin/Documents/coding/golang/foodShop/rewritten/draft.txt")
+найти строку выше в main.go и раскоментить на первый запуск. После первого запуска закомментить обратно.
+Таблица будет заполена \
 Возможно будет необходимо в директории /rewritten выполнить: \
 go get .\
 go mod tidy\

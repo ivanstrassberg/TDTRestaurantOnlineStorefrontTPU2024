@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import './ProductDetail.css'; // Import the CSS file for styling
 
-// Fetching product details and adding to cart
 function ProductDetail() {
   const { id } = useParams(); // Get the dynamic route parameter
   const [product, setProduct] = useState(null);
@@ -32,7 +32,6 @@ function ProductDetail() {
           'X-Authorization': localStorage.getItem('X-Authorization'), // Pass JWT token
           'email': localStorage.getItem('email'), // Pass email
         },
-        // body: JSON.stringify({ id: id }), // Pass product ID
       });
 
       if (!response.ok) {
@@ -50,14 +49,16 @@ function ProductDetail() {
   }
 
   return (
-    <div>
-      <h1>{product.name}</h1>
-      <p>Description: {product.description}</p>
-      <p>Price: ${product.price.toFixed(2)}</p>
-      <p>Stock: {product.stock}</p>
-      <p>Rating: {product.rating}</p>
+    <div className="product-detail-container">
+      <h1 className="product-title">{product.name}</h1>
+      <p className="product-description">Description: {product.description}</p>
+      <p className="product-details">Price: ${product.price.toFixed(2)}</p>
+      <p className="product-details">Stock: {product.stock}</p>
+      <p className="product-details">Rating: {product.rating}</p>
 
-      <button onClick={handleAddToCart}>Add to Cart</button> {/* Button to add to cart */}
+      <button className="add-to-cart-button" onClick={handleAddToCart}>
+        Add to Cart
+      </button> {/* Button to add to cart */}
     </div>
   );
 }

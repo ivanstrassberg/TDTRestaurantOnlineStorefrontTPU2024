@@ -10,9 +10,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// todo make it env variable
+	// use to seed DB with data once!
+	// store.SeedWithData("/Users/ivansilin/Documents/coding/golang/foodShop/rewritten/draft.txt")
 	staticDir := "/Users/ivansilin/Documents/coding/golang/foodShop/initHandle/static/"
 	server := NewAPIServer(":8080", store, staticDir)
+
 	server.Run()
 
 }

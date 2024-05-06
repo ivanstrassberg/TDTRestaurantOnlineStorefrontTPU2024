@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { fetchWithJWT } from './fetchWithJWT'; // Import fetchWithJWT function
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AdminPage = () => {
   const [productName, setProductName] = useState('');
@@ -9,6 +9,46 @@ const AdminPage = () => {
   const [rating, setRating] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [message, setMessage] = useState('');
+  const [isAuthorized, setIsAuthorized] = useState(true); // Authorization flag
+  const navigate = useNavigate(); // Navigation hook for redirection
+
+  const handleStockChange = (e) => {
+    const value = e.target.value;
+    setStock(value === '' ? '' : parseInt(value, 10)); // Handle empty input
+  };
+
+  const handlePriceChange = (e) => {
+    const value = e.target.value;
+    setRating(value === '' ? '' : parseFloat(value)); // Ensure proper conversion
+  };
+
+  const handleCategoryIdChange = (e) => {
+    const value = e.target.value;
+    setCategoryId(value === '' ? '' : parseInt(value, 10)); // Handle empty input
+  };
+  useEffect(() => {
+    fetch('http://localhost:8080/admin', { 
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Authorization': localStorage.getItem('X-Authorization'),
+        'email': localStorage.getItem('email'),
+      },
+    })
+      .then((response) => {
+        if (response.status === 401) { 
+          setIsAuthorized(false); 
+          navigate('/unauthorized'); 
+        }
+      })
+      .catch((error) => {
+        console.error("Error checking authorization:", error); 
+      });
+  }, [navigate]); 
+
+  if (!isAuthorized) {
+    return null; 
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,9 +68,9 @@ const AdminPage = () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Authorization': localStorage.getItem('X-Authorization'),
-          'email': localStorage.getItem('email')
+          'email': localStorage.getItem('email'),
         },
-        body: JSON.stringify(newProduct), // Convert product data to JSON
+        body: JSON.stringify(newProduct),
       });
 
       if (response.ok) {
@@ -67,34 +107,34 @@ const AdminPage = () => {
           <label>Price:</label>
           <input
             type="number"
-            step="0.01"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            step="0.1"
+            value={[rating]} // Controlled component
+            onChange={handlePriceChange} // Ensure conversion
           />
         </div>
         <div>
           <label>Stock:</label>
           <input
             type="number"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
+            value={stock} // Controlled component
+            onChange={handleStockChange} // Proper handling of empty input
           />
         </div>
         <div>
-          <label>Rating:</label>
+          {/* <label>Rating:</label>
           <input
             type="number"
             step="0.1"
-            value={rating}
-            onChange={(e) => setRating(e.target.value)}
-          />
+            value={rating} // Controlled component
+            onChange={handleRatingChange} // Ensure conversion
+          /> */}
         </div>
         <div>
           <label>Category ID:</label>
           <input
             type="number"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
+            value={categoryId} // Controlled component
+            onChange={handleCategoryIdChange} // Ensure conversion
           />
         </div>
         <button type="submit">Create Product</button>

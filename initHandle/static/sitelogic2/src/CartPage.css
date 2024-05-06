@@ -1,0 +1,105 @@
+/* Cart Page Container */
+.cart-container {
+  padding: 20px;
+  font-family: 'Lato', sans-serif; /* You can change the font to your preference */
+}
+
+/* Cart Title */
+.cart-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Error Message */
+.cart-error {
+  color: red;
+  text-align: center;
+}
+
+/* Cart List */
+.cart-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Cart Items */
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd; /* You can adjust this color */
+}
+
+/* Cart Item Links */
+.cart-item a {
+  text-decoration: none;
+  color: #333;
+}
+
+.cart-item a:hover {
+  text-decoration: underline;
+}
+
+/* Cart Item Quantity Controls */
+.cart-quantity {
+  display: flex;
+  align-items: center;
+}
+
+.cart-quantity button {
+  background: #f6f6f6;
+  border: 1px solid #ccc;
+  padding: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.cart-quantity button:hover {
+  background: #e0e0e0;
+}
+
+.cart-quantity span {
+  margin: 0 10px;
+}
+
+/* Cart Delete Button */
+.cart-delete {
+  background: #e74c3c; /* Red for delete */
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.cart-delete:hover {
+  background: #c0392b; /* Darker red on hover */
+}
+
+/* Empty Cart Message */
+.cart-empty {
+  text-align: center;
+  font-style: italic;
+  color: #aaa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  /* For smaller screens, adjust the cart items */
+  .cart-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cart-quantity {
+    justify-content: flex-start;
+  }
+
+  .cart-delete {
+    margin-top: 10px; /* Allow space between controls */
+  }
+}

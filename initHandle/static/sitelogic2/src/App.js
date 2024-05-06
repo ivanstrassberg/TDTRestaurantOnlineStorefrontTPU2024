@@ -1,48 +1,53 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import logo from './logo.svg';
 import './App.css'; // Import styles
 import LoginForm from './LoginForm';
 import AdminPage from './AdminPage';
-// import ProtectedRoute from './ProtectedRoute'; // Import the ProtectedRoute component
 import ProductList from './ProductList';
 import ProductDetail from './ProductDetail';
 import RegisterPage from './RegisterPage';
 import CartPage from './CustomerCart';
+import UnauthorizedPage from './UnauthorizedPage';
 
-function App() {
+const App = () => {
   return (
-    <Router> {/* Set up the router */}
+    <Router>
       <div className="App">
-        <header className="App-header"> {/* Header section */}
-          {/* <img src={logo} className="App-logo" alt="logo" /> Logo */}
-          <p>
-            Welcome to the main page. 
-            <ul>
-              <li> <Link to="/login">Go to Login Page</Link> {/* Navigation link to login */}</li>
-              <li><Link to="/admin">Go to Admin Page</Link> {/* Navigation link to admin */}</li>
-              <li><Link to="/register">Register!</Link></li>
-              <li> <Link to="/cart">Go to Cart</Link> {/* Navigation link to login */}</li>
-              <li> <Link to="/products">Go to Products</Link> {/* Navigation link to admin */}</li>
-            {/* <Link to="/register">Register!</Link>  */}
-            </ul>
+        <header className="header">
+          <nav className="navbar">
+            <div className="container">
+              <p className="navbar-brand">
+                <img src={('./logo.png')} alt="Logo" className="logo_img" />
 
-          </p>
+              </p>
+              <div className="navbar-wrap">
+                <ul className="navbar-menu">
+                  <li><Link to="/">Home</Link></li>
+                  <li><Link to="/admin">Admin</Link></li>
+                  <li><Link to="/login">Login</Link></li>
+                  <li><Link to="/register">Register</Link></li>
+                  <li><Link to="/cart">Cart</Link></li>
+                  <li><Link to="/products">Products</Link></li>
+                </ul>
+              </div>
+            </div>
+          </nav>
         </header>
 
-        <Routes> {/* Define routes */}
+
+        <Routes> {/* Define application routes */}
+          <Route path="/" element={<ProductList />} /> {/* Home with product list */}
+          <Route path="/admin" element={<AdminPage />} /> {/* Admin page */}
+          <Route path="/login" element={<LoginForm />} /> {/* Login form */}
+          <Route path="/register" element={<RegisterPage />} /> {/* Registration page */}
           <Route path="/cart" element={<CartPage />} /> {/* Cart page */}
-          <Route path="/login" element={<LoginForm />} /> {/* Route for login */}
-          {/* <ProtectedRoute exact path="/admin" component={AdminPage} /> Protected Route */}
-          <Route path="/products" element={<ProductList />} /> {/* Home page showing the product list */}
-          <Route path="/product/:id" element={<ProductDetail />} /> {/* Dynamic route for product detail */}
-          <Route path="/admin" element={<AdminPage />} /> { }
-          <Route path="/register" element={<RegisterPage />} /> { }
-          {/* Add more routes here if needed */}
+          <Route path="/products" element={<ProductList />} /> {/* Product list */}
+          <Route path="/product/:id" element={<ProductDetail />} /> {/* Product detail */}
+          <Route path="/unauthorized" element={<UnauthorizedPage />} /> {/* Unauthorized page */}
         </Routes>
       </div>
     </Router>
   );
-}
+};
 
-export default App; // Export the App component
+export default App;

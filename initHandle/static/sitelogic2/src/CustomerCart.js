@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './CartPage.css'; // Import the CSS file for styling
 
 const CartPage = () => {
   const [products, setProducts] = useState([]);
@@ -16,6 +17,9 @@ const CartPage = () => {
       },
     })
       .then((response) => {
+        if (response.status === 401) {
+            navigate('/unauthorized');
+        }
         if (!response.ok) {
           throw new Error(`Failed to fetch cart: ${response.status}`);
         }
@@ -25,19 +29,12 @@ const CartPage = () => {
         if (!Array.isArray(data)) {
           throw new Error("Expected an array of products");
         }
-
-        // Initialize default quantities if not already provided
-        const initializedProducts = data.map((product) => ({
-          ...product,
-          quantity: product.quantity || 1,
-        }));
-
-        setProducts(initializedProducts);
+        setProducts(data);
       })
       .catch((err) => {
         setError(err.message);
       });
-  }, []);
+  }, [navigate]);
 
   const increaseQuantity = (productId) => {
     setProducts((prevProducts) =>
@@ -70,7 +67,7 @@ const CartPage = () => {
     })
       .then((response) => {
         if (!response.ok) {
-          throw new Error(`Failed to delete product: ${response.status}`);
+          throw Error(`Failed to delete product: ${response.status}`);
         }
         setProducts((prevProducts) =>
           prevProducts.filter((product) => product.id !== productId)
@@ -82,17 +79,17 @@ const CartPage = () => {
   };
 
   return (
-    <div>
-      <h1>Your Cart</h1>
+    <div className="cart-container">
+      <h1 className="cart-title">Your Cart</h1>
       {error ? (
-        <p>Error: {error}</p>
+        <p className="cart-error">Error: {error}</p>
       ) : (
-        <ul>
+        <ul className="cart-list">
           {products.length === 0 ? (
-            <li>Your cart is empty</li>
+            <li className="cart-empty">Your cart is empty</li>
           ) : (
             products.map((product) => (
-              <li key={product.id}>
+              <li className="cart-item" key={product.id}>
                 <a
                   href="#"
                   onClick={(e) => {
@@ -102,12 +99,17 @@ const CartPage = () => {
                 >
                   {product.name} - ${product.price.toFixed(2)}
                 </a>
-                <div>
+                <div className="cart-quantity">
                   <button onClick={() => decreaseQuantity(product.id)}> - </button>
                   <span>{product.quantity}</span>
                   <button onClick={() => increaseQuantity(product.id)}> + </button>
                 </div>
-                <button onClick={() => handleDelete(product.id)}>Delete</button>
+                <button
+                  className="cart-delete"
+                  onClick={() => handleDelete(product.id)}
+                >
+                  Delete
+                </button>
               </li>
             ))
           )}

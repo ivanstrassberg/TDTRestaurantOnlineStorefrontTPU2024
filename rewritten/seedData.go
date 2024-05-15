@@ -30,7 +30,7 @@ func (s *PostgresStore) SeedWithData(fileName string) error {
 		lines = append(lines, scanner.Text())
 	}
 	for _, line := range lines {
-		strs := strings.Split(line, ",")
+		strs := strings.Split(line, ";")
 		// fmt.Println(len(strs), strs[0])
 		// fmt.Println(strs[0], strs[1], (strs[2]), strs[3], 0, strs[4])
 		_, err := s.db.Exec(query, strs[0], strs[1], strs[2], strs[3], 0, strs[4])

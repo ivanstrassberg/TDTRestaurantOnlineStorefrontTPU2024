@@ -1,5 +1,7 @@
 html {
+  scroll-behavior: smooth;
   box-sizing: border-box;
+  
 }
 
 *,
@@ -8,11 +10,17 @@ html {
   box-sizing: inherit;
   
 }
-
+img {
+  display: flex;
+  /* justify-content: center;
+  align-items: center; */
+  width: 250px;
+}
 body {
   margin: 0;
   font-family: "Lato", sans-serif;
   font-weight: 400;
+  margin: 2em;
 }
 
 .header {
@@ -37,7 +45,7 @@ body {
 .navbar-menu {
   list-style-type: none;
   padding-left: 0;
-  margin-bottom: 0;
+  /* margin-bottom: 0; */
 }
 
 .navbar-menu li {
@@ -48,7 +56,7 @@ body {
   color: #282e14;
   opacity: 0.7;
   text-decoration: none;
-  padding: 20px;
+  /* padding: 20px; */
 }
 
 .navbar-menu li a:hover {
@@ -56,7 +64,12 @@ body {
 }
 
 .navbar-wrap {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+form {
+  margin: 15px;
 }
 
 .navbar-brand {

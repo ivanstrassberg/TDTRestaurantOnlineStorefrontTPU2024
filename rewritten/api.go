@@ -52,11 +52,23 @@ func (s *APIServer) Run() {
 	mux.HandleFunc("/account/{id}", withJWTauth(makeHTTPHandleFunc(s.handleAccount)))
 	mux.HandleFunc("/login", (makeHTTPHandleFunc(s.handleLogin)))
 	mux.HandleFunc("/register", (makeHTTPHandleFunc(s.handleRegister)))
+	mux.HandleFunc("/search/{key}", (makeHTTPHandleFunc(s.handleSearch)))
 
 	log.Println("JSON API server running on port", s.listenAddr)
 	if err := http.ListenAndServe(s.listenAddr, mux); err != nil {
 		log.Fatalf("Error starting server: %s\n", err)
 	}
+}
+
+func (s *APIServer) handleSearch(w http.ResponseWriter, r *http.Request) error {
+	key := r.PathValue("key")
+	products, err := s.store.SearchProducts(key)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, "something went wrong")
+		return err
+	}
+	WriteJSON(w, http.StatusOK, products)
+	return nil
 }
 
 func (s *APIServer) handleCart(w http.ResponseWriter, r *http.Request) error {
@@ -66,6 +78,7 @@ func (s *APIServer) handleCart(w http.ResponseWriter, r *http.Request) error {
 		WriteJSON(w, http.StatusInternalServerError, ApiError{Error: "something went wrong during cart handling"})
 		return err
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(productList)
 	// WriteJSON(w, http.StatusOK, "products listed")

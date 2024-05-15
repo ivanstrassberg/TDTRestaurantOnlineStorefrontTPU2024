@@ -29,7 +29,12 @@ const CartPage = () => {
         if (!Array.isArray(data)) {
           throw new Error("Expected an array of products");
         }
-        setProducts(data);
+        // Ensure each product object includes the quantity property
+        const productsWithQuantity = data.map((product) => ({
+          ...product,
+          quantity: 1, // Set initial quantity to 1
+        }));
+        setProducts(productsWithQuantity);
       })
       .catch((err) => {
         setError(err.message);

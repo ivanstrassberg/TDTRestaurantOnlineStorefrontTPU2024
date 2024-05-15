@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './ProductList.css'; // Import the CSS for styling
-
+import { useParams } from 'react-router-dom';
 function ProductCard({ product }) {
   return (
     <div className="card">
@@ -12,11 +12,11 @@ function ProductCard({ product }) {
   );
 }
 
-function ProductList() {
+function ProductSearch() {
   const [products, setProducts] = useState([]);
-
+  const { key } = useParams();
   useEffect(() => {
-    fetch('http://localhost:8080/products') 
+    fetch(`http://localhost:8080/search/${key}`) 
       .then((response) => response.json())
       .then((data) => {
         setProducts(data);
@@ -24,16 +24,17 @@ function ProductList() {
       .catch((error) => {
         console.error('Error fetching products:', error);
       });
-  }, []); 
+  }, []); // Run once on component mount
 
   return (
     <div className="product-list-container">
       {/* <h1>Products</h1> */}
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} /> 
+        <ProductCard key={product.id} product={product} /> // Display each product as a card
       ))}
     </div>
+    
   );
 }
 
-export default ProductList;
+export default ProductSearch;

@@ -23,6 +23,7 @@ type Storage interface {
 	DeleteCategory(string) error
 	IfExists(string, string, any) (bool, error)
 	AddCategory(string, string) error
+	SearchProducts(string) ([]DBEntity, error)
 }
 
 type DBEntity interface{}
@@ -287,15 +288,6 @@ func (s *PostgresStore) GetCartProducts(email string) ([]DBEntity, error) {
 	}
 
 	return products, nil
-	// for rows.Next() {
-	// 	var product Product
-	// 	if err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock, &product.Rating, &product.Category_ID); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	products = append(products, product)
-	// }
-	// fmt.Println(products)
-	// return products, nil
 }
 
 func (s *PostgresStore) RegisterCustomer(email string, password string) (bool, error) {
@@ -346,29 +338,15 @@ func (s *PostgresStore) LoginCustomer(email string, password string) (bool, erro
 	return check2, nil
 }
 
-// func (s *PostgresStore) createConstraints() error {
-// 	return nil
-// }
+func (s *PostgresStore) SearchProducts(string) ([]DBEntity, error) {
 
-// func (s *PostgresStore) GetCustomers() ([]*Customer, error) {
-// 	query := `select * from customer`
-// 	rows, err := s.db.Query(query)
-// 	fmt.Println(rows)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-// 	customers := []*Customer{}
-// 	for rows.Next() {
-// 		customer, err := scanIntoCustomer(rows)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		customers = append(customers, customer)
-// 	}
-
-// 	return customers, nil
-// }
+	productDBEntity, err := s.GetFromDB("product")
+	if err != nil {
+		return nil, err
+	}
+	// fmt.Println(productDBEntity)
+	return productDBEntity, nil
+}
 
 func (s *PostgresStore) GetFromDB(table string) ([]DBEntity, error) {
 	validTables := map[string]bool{

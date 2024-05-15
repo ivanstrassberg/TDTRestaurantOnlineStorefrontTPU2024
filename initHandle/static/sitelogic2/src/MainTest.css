@@ -1,0 +1,123 @@
+/* App.css */
+.section {
+  padding: 50px 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+#about{
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f6f6f6;
+  text-align:left;
+}
+.section-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-text {
+  flex: 1;
+  padding-right: 50px;
+}
+
+.section-image img {
+  max-width: 100%;
+  height: auto;
+}
+
+html {
+    scroll-behavior: smooth;
+    box-sizing: border-box;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+  
+  body {
+    margin: 0;
+    font-family: "Lato", sans-serif;
+    font-weight: 400;
+  }
+  
+  .header {
+    background-image:"https://media.cnn.com/api/v1/images/stellar/prod/190411154654-07-bouillon-restaurants-paris.jpg?q=w_3101,h_1744,x_0,y_0,c_fill";
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 80px;
+    background-color: #f6f6f6;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .section a{
+    text-decoration: none;
+    /* border: 1px solid white; */
+    background-color: white;
+    color: white;
+    transition: 0.3s color;
+  }
+  .section a:hover {
+    background-color:#282e14;
+    transition: 0.3s color;
+  }
+  .section-content .background {
+    background-image: url('https://img.delicious.com.au/tcnuUxOy/del/2023/02/garcon-bleu-183617-2.jpg');
+    background-size: cover;
+    background-position: center;
+    height: 20vh;
+    width: 5vh;
+    position: relative;
+    color: white;
+    text-decoration: none;
+    font-size: 25px;
+  }
+  .header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .navbar-menu {
+    list-style-type: none;
+    padding-left: 0;
+  }
+  
+  .navbar-menu li {
+    display: inline-block;
+  }
+  
+  .navbar-menu li a {
+    color: #282e14;
+    opacity: 0.7;
+    text-decoration: none;
+    padding: 20px;
+  }
+  
+  .navbar-menu li a:hover {
+    opacity: 1;
+  }
+  
+  .section {
+    padding: 80px 0;
+    text-align: center;
+  }
+  
+  .footer {
+    background-color: #282e14;
+    color: #fff;
+    padding: 20px 0;
+    text-align: center;
+  }
+  
+  .footer p {
+    margin: 0;
+  }
+  

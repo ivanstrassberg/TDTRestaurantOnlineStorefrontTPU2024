@@ -16,7 +16,7 @@ type Storage interface {
 	AddProduct(string, string, float64, int, int) error
 	AddProductToCustomerCart(int, string) (bool, error)
 	RemoveProductFromCustomerCart(int, string) (bool, error)
-	GetCartProducts(string) ([]DBEntity, error)
+	GetCartProducts(string) ([]Product, error)
 	// GetCustomers() ([]*Customer, error)
 	GetPassword(string) (string, error)
 	DeleteProduct(string) error
@@ -255,8 +255,7 @@ func (s *PostgresStore) createOrderProductJunctionTable() error {
 	return nil
 }
 
-func (s *PostgresStore) GetCartProducts(email string) ([]DBEntity, error) {
-
+func (s *PostgresStore) GetCartProducts(email string) ([]Product, error) {
 	var cartID int
 	err := s.db.QueryRow(`
         SELECT cart.id
@@ -277,7 +276,7 @@ func (s *PostgresStore) GetCartProducts(email string) ([]DBEntity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	products := []DBEntity{}
+	products := []Product{}
 	//
 	for rows.Next() {
 		product, err := scanIntoProduct(rows)
@@ -450,13 +449,13 @@ func (s *PostgresStore) GetFromDBByID(table string, id int) ([]DBEntity, error) 
 	return results, nil
 }
 
-func scanIntoProduct(rows *sql.Rows) (*Product, error) {
+func scanIntoProduct(rows *sql.Rows) (Product, error) {
 	var product Product
 	err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock, &product.Rating, &product.Category_ID)
 	if err != nil {
-		return nil, err
+		return Product{}, err
 	}
-	return &product, nil
+	return product, nil
 }
 
 func scanIntoCustomer(rows *sql.Rows) (*Customer, error) {

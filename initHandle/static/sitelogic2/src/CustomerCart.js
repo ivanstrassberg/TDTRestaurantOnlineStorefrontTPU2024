@@ -29,10 +29,10 @@ const CartPage = () => {
         if (!Array.isArray(data)) {
           throw new Error("Expected an array of products");
         }
-        // Ensure each product object includes the quantity property
+
         const productsWithQuantity = data.map((product) => ({
           ...product,
-          quantity: 1, // Set initial quantity to 1
+          quantity: 1, 
         }));
         setProducts(productsWithQuantity);
       })
@@ -83,6 +83,29 @@ const CartPage = () => {
       });
   };
 
+  const handleCheckout = () => {
+    fetch(`http://localhost:8080/cart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Authorization': localStorage.getItem('X-Authorization'),
+        'email': localStorage.getItem('email'),
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw Error(`Failed to checkout product: ${response.status}`);
+        }
+        console.log(response)
+        // setProducts((prevProducts) =>
+        //   prevProducts.filter((product) => product.id !== productId)
+        // );
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
+  };
+
   return (
     <div className="cart-container">
       <h1 className="cart-title">Your Cart</h1>
@@ -120,6 +143,10 @@ const CartPage = () => {
           )}
         </ul>
       )}
+      <button
+        className="cart-delete"
+        onClick={() => handleCheckout()}
+      >Checkout</button>
     </div>
   );
 };

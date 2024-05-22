@@ -6,7 +6,8 @@ import (
 )
 
 func oka() {
-	stripe.Key = "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo"
+	stripe.Key =
+		"sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo"
 	params := &stripe.ChargeParams{}
 	sc := &client.API{}
 	sc.Init(stripe.Key, nil)

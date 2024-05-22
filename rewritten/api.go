@@ -74,6 +74,18 @@ func (s *APIServer) handleSearch(w http.ResponseWriter, r *http.Request) error {
 func (s *APIServer) handleCart(w http.ResponseWriter, r *http.Request) error {
 	email := r.Header.Get("email")
 	productList, err := s.store.GetCartProducts(email)
+	if r.Method == "POST" {
+		// fmt.Println("got it")
+		var sum float64
+		for i := 0; i < len(productList); i++ {
+			sum += productList[i].Price
+
+		}
+
+		// WriteJSON(w, http.StatusOK, sum)
+		fmt.Println(sum)
+		return nil
+	}
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, ApiError{Error: "something went wrong during cart handling"})
 		return err
@@ -556,3 +568,32 @@ func isCommonMailDomain(email string) bool {
 
 	return false
 }
+
+// func getProductValues(row Product) (Product, error) {
+// 	fmt.Println(row.)
+// 	reader := strings.NewReader(row)
+// 	var partDescription string
+// 	_, err := fmt.Fscanf(reader, "%d %s %s", &product.ID, &product.Name, &partDescription)
+// 	if err != nil {
+// 		return Product{}, err
+// 	}
+
+// 	var remaining string
+// 	_, err = fmt.Fscanln(reader, &remaining)
+// 	if err != nil {
+// 		return Product{}, err
+// 	}
+
+// 	product.Description = partDescription + " " + remaining
+// 	product.Description = strings.TrimSuffix(product.Description, "}")
+
+// 	_, err = fmt.Sscanf(product.Description, "%s %f %d %d %d",
+// 		&product.Description, &product.Price, &product.Stock, &product.Rating, &product.Category_ID)
+
+// 	if err != nil {
+// 		return Product{}, err
+// 	}
+
+// 	return product, nil
+
+// }

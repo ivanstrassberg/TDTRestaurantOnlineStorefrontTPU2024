@@ -4,7 +4,7 @@
     font-family: 'Lato', sans-serif; /* Change to your preferred font */
     display: flex;
     flex-wrap: wrap; /* Allows the cards to wrap */
-    justify-content: center; /* Centers the content */
+    justify-content: space-between; /* Centers the content */
   }
   
   /* Product Card */

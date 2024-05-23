@@ -14,6 +14,8 @@ const CartPage = () => {
         'Content-Type': 'application/json',
         'X-Authorization': localStorage.getItem('X-Authorization'),
         'email': localStorage.getItem('email'),
+        'Authorization': localStorage.getItem('Authorization') 
+        // im at this point above, trying to get stripe to work
       },
     })
       .then((response) => {
@@ -29,7 +31,12 @@ const CartPage = () => {
         if (!Array.isArray(data)) {
           throw new Error("Expected an array of products");
         }
-        setProducts(data);
+
+        const productsWithQuantity = data.map((product) => ({
+          ...product,
+          quantity: 1, 
+        }));
+        setProducts(productsWithQuantity);
       })
       .catch((err) => {
         setError(err.message);
@@ -78,6 +85,32 @@ const CartPage = () => {
       });
   };
 
+  const handleCheckout = () => {
+    // const [clientSecret, setClientSecret] = useState("");
+    fetch(`http://localhost:8080/cart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Authorization': localStorage.getItem('X-Authorization'),
+        'email': localStorage.getItem('email'),
+        'Authorization': localStorage.getItem('Authorization')
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw Error(`Failed to checkout product: ${response.status}`);
+        }
+        console.log(response)
+        // setProducts((prevProducts) =>
+        //   prevProducts.filter((product) => product.id !== productId)
+        // );
+      })
+      .catch((err) => {
+        setError(err.message);
+      })
+      
+  };
+
   return (
     <div className="cart-container">
       <h1 className="cart-title">Your Cart</h1>
@@ -115,6 +148,10 @@ const CartPage = () => {
           )}
         </ul>
       )}
+      <button
+        className="cart-delete"
+        onClick={() => handleCheckout()}
+      >Checkout</button>
     </div>
   );
 };

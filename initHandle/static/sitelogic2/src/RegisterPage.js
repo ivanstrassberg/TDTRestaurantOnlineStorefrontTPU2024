@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './css/register.css';
+import './RegisterPage.css';
 function Registration() {
   const [email, setEmail] = useState('');
   const [password_hash, setPassword] = useState('');
@@ -44,44 +44,46 @@ function Registration() {
   };
 
   return (
-    <div>
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          {emailError && <div style={{ color: 'red' }}>{emailError}</div>} {/* Display error above field */}
-        </div>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password_hash}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit">Register</button>
-      </form>
-
-      {generalError && <div style={{ color: 'red' }}>{generalError}</div>} {/* General error handling */}
-
-      {/* Pop-up on successful registration */}
-      {success && (
-        <div className="popup">
-          <div className="popup-content">
-            <h2>Registration Successful!</h2>
-            <p>Your account has been created. Click below to log in.</p>
-            <button onClick={() => window.location.href = '/login'}>Go to Login</button>
-          </div>
-        </div>
-      )}
+    <div style={{ textAlign: 'center' }}>
+  <h1 style={{ marginBottom: '20px' }}>Register</h1>
+  <form onSubmit={handleSubmit} style={{ maxWidth: '400px', margin: '0 auto' }}>
+    <div style={{ marginBottom: '10px' }}>
+      <label>Email</label>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+      />
+      {emailError && <div style={{ color: 'red', marginTop: '5px' }}>{emailError}</div>}
     </div>
+    <div style={{ marginBottom: '10px' }}>
+      <label>Password</label>
+      <input
+        type="password"
+        value={password_hash}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+      />
+    </div>
+    <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: '#fff', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>Register</button>
+  </form>
+
+  {generalError && <div style={{ color: 'red', marginTop: '10px' }}>{generalError}</div>}
+
+  {success && (
+    <div className="popup" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div className="popup-content" style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '5px', textAlign: 'center' }}>
+        <h2>Registration Successful!</h2>
+        <p>Your account has been created. Click below to log in.</p>
+        <button onClick={() => window.location.href = '/login'} style={{ padding: '10px', backgroundColor: '#007bff', color: '#fff', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>Go to Login</button>
+      </div>
+    </div>
+  )}
+</div>
+
   );
 }
 

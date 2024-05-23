@@ -15,16 +15,19 @@ const LoginForm = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          
         },
         body: JSON.stringify({ email, password_hash }),
       });
 
       if (response.ok) {
-        const data = await response.json(); // Extract response data
+        const data = await response.json() ;
+        // const dataAuth = await response.json(); // Extract response data
         console.log(data);
         // Store JWT token in localStorage
         // if (data.token) {
-        localStorage.setItem('X-Authorization', data); 
+        localStorage.setItem('X-Authorization', data['X-Authorization']);
+        localStorage.setItem('Authorization', data['Authorization']);
         localStorage.setItem('email', email)
         setMessage('Login successful');
         navigate('/products');
@@ -39,29 +42,32 @@ const LoginForm = () => {
   };
 
   return (
-    <div>
+    <div style={{ textAlign: 'center' }}>
       <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
+      <form onSubmit={handleSubmit} style={{ maxWidth: '400px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ marginRight: '10px' }}>Email:</label>
           <input
             type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
           />
         </div>
-        <div>
-          <label>Password:</label>
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ marginRight: '10px' }}>Password:</label>
           <input
             type="password"
             value={password_hash}
             onChange={(e) => setPassword(e.target.value)}
+            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
           />
         </div>
-        <button type="submit">Login</button>
+        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: '#fff', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>Login</button>
       </form>
-      {message && <p>{message}</p>} {/* Display status message */}
+      {message && <p style={{ marginTop: '10px' }}>{message}</p>}
     </div>
+
   );
 };
 

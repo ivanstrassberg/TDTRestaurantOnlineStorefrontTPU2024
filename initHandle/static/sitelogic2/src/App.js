@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import './App.css'; // Import styles
-import '../src/css/logo.png'
+import '../src/css/logo.png';
+
+// Stripe imports
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import CheckoutForm from "./CheckoutForm";
 
 import Footer from './Footer';
 import Hero from './Hero';
@@ -13,7 +18,10 @@ import ProductDetail from './ProductDetail';
 import RegisterPage from './RegisterPage';
 import CartPage from './CustomerCart';
 import UnauthorizedPage from './UnauthorizedPage';
-import ProductSearch from './ProductSearch'
+import ProductSearch from './ProductSearch';
+
+// Load Stripe outside of the component's render to avoid recreating the Stripe object on every render
+const stripePromise = loadStripe("pk_test_51PGBY6RsvEv5vPVlHUbe5pB27TSwBnFGH7t93QSkoef6FEy1hobnSCmWSJDk3cnQgj1Wrf9TybhyEyu79ZEtuNST00aSiTI6Vg");
 
 const Header = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +40,7 @@ const Header = () => {
       <nav className="navbar">
         <div className="container">
           <p className="navbar-brand">
-            <svg xmlns="http://www.w3.org/2000/svg" version="1.0" width="150.000000pt" height="45.000000pt" viewBox="0 0 695.000000 115.000000" preserveAspectRatio="xMidYMid meet">
+          <svg xmlns="http://www.w3.org/2000/svg" version="1.0" width="150.000000pt" height="45.000000pt" viewBox="0 0 695.000000 115.000000" preserveAspectRatio="xMidYMid meet">
               <g transform="translate(0.000000,115.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none">
                 <path d="M2863 932 c-35 -74 -41 -81 -72 -87 -51 -10 -141 -45 -141 -56 0 -12 2 -12 81 12 39 12 72 19 75 16 3 -3 -20 -76 -52 -162 -54 -146 -59 -157 -86 -162 -41 -8 -49 -27 -9 -21 29 4 32 3 27 -16 -35 -121 -57 -225 -54 -259 3 -42 3 -42 47 -45 52 -4 167 20 266 55 74 26 115 53 82 53 -10 0 -31 -7 -46 -14 -27 -14 -223 -68 -288 -80 -47 -8 -55 9 -37 85 8 35 26 101 39 145 l25 82 102 12 c162 19 191 24 196 39 3 9 -2 11 -14 7 -26 -7 -267 -36 -271 -32 -7 6 107 320 118 327 16 9 138 27 243 35 87 7 88 7 82 -15 -3 -11 -9 -30 -12 -42 -5 -19 -12 -20 -107 -18 -71 2 -102 -1 -105 -9 -3 -9 23 -12 97 -12 56 0 101 -3 101 -7 0 -5 -7 -44 -15 -88 -36 -185 -56 -482 -35 -515 7 -10 10 18 10 87 0 101 17 254 46 408 23 127 7 115 155 115 80 0 128 4 124 10 -3 5 -58 9 -122 9 -64 0 -118 3 -120 5 -6 6 26 108 38 120 13 14 11 46 -2 46 -6 0 -18 -18 -27 -40 l-17 -40 -75 0 c-42 0 -113 -5 -159 -10 -46 -6 -86 -9 -88 -6 -3 2 7 35 22 71 38 96 22 93 -22 -3z" />
                 <path d="M725 962 c-71 -44 -242 -253 -372 -454 -43 -66 -79 -115 -81 -109 -2 6 3 64 12 129 32 244 31 332 -7 356 -42 26 -142 -133 -188 -299 -31 -109 -34 -295 -5 -322 18 -17 18 -17 6 6 -20 40 -7 219 24 324 44 149 132 293 165 273 15 -10 14 -115 -4 -281 -19 -180 -19 -215 0 -215 8 0 61 71 119 158 163 245 327 429 375 420 13 -3 16 -16 14 -72 -4 -110 -49 -364 -108 -605 -31 -123 -53 -226 -51 -228 15 -15 117 382 151 580 53 316 41 395 -50 339z" />
@@ -55,7 +63,6 @@ const Header = () => {
               <li><Link to="/register">Register</Link></li>
               <li><Link to="/cart">Cart</Link></li>
               <li><Link to="/products">Menu</Link></li>
-              
             </ul>
             <form onSubmit={handleSearch} className="search-form" style={{ textAlign: 'center', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <input
@@ -75,6 +82,20 @@ const Header = () => {
 };
 
 const App = () => {
+  const [clientSecret, setClientSecret] = useState("");
+
+  useEffect(() => {
+    fetch("/create-payment-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    })
+      .then((res) => res.json())
+      .then((data) => setClientSecret(data.clientSecret));
+  }, []);
+
+  const appearance = { theme: 'stripe' };
+  const options = { clientSecret, appearance };
+
   return (
     <Router>
       <Header /> {/* Include the header component */}
@@ -89,8 +110,15 @@ const App = () => {
         <Route path="/product/:id" element={<ProductDetail />} /> {/* Product detail */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} /> {/* Unauthorized page */}
         <Route path="/search/:key" element={<ProductSearch />} /> {/* Search results */}
+        {clientSecret && (
+          <Route path="/checkout" element={
+            <Elements options={options} stripe={stripePromise}>
+              <CheckoutForm />
+            </Elements>
+          } />
+        )}
       </Routes>
-      <Footer />
+      {/* <Footer /> */}
     </Router>
   );
 };

@@ -15,16 +15,19 @@ const LoginForm = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          
         },
         body: JSON.stringify({ email, password_hash }),
       });
 
       if (response.ok) {
-        const data = await response.json(); // Extract response data
+        const data = await response.json() ;
+        // const dataAuth = await response.json(); // Extract response data
         console.log(data);
         // Store JWT token in localStorage
         // if (data.token) {
-        localStorage.setItem('X-Authorization', data);
+        localStorage.setItem('X-Authorization', data['X-Authorization']);
+        localStorage.setItem('Authorization', data['Authorization']);
         localStorage.setItem('email', email)
         setMessage('Login successful');
         navigate('/products');

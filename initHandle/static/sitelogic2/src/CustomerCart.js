@@ -14,6 +14,8 @@ const CartPage = () => {
         'Content-Type': 'application/json',
         'X-Authorization': localStorage.getItem('X-Authorization'),
         'email': localStorage.getItem('email'),
+        'Authorization': localStorage.getItem('Authorization') 
+        // im at this point above, trying to get stripe to work
       },
     })
       .then((response) => {
@@ -84,12 +86,14 @@ const CartPage = () => {
   };
 
   const handleCheckout = () => {
+    // const [clientSecret, setClientSecret] = useState("");
     fetch(`http://localhost:8080/cart`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Authorization': localStorage.getItem('X-Authorization'),
         'email': localStorage.getItem('email'),
+        'Authorization': localStorage.getItem('Authorization')
       },
     })
       .then((response) => {
@@ -103,7 +107,8 @@ const CartPage = () => {
       })
       .catch((err) => {
         setError(err.message);
-      });
+      })
+      
   };
 
   return (

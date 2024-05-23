@@ -11,6 +11,8 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
+	"github.com/stripe/stripe-go/v78"
+	"github.com/stripe/stripe-go/v78/client"
 	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
@@ -32,19 +34,23 @@ func enableCors(w *http.ResponseWriter) {
 	header := (*w).Header()
 	header.Set("Access-Control-Allow-Origin", "*")
 	header.Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
-	header.Set("Access-Control-Allow-Headers", "Content-Type, X-Authorization, X-Requested-With, email")
+	header.Set("Access-Control-Allow-Headers", "Content-Type, X-Authorization, X-Requested-With, email, Authorization")
 	header.Set("Access-Control-Allow-Credentials", "true")
 	// WriteJSON(*w, http.StatusOK, header)
 }
 func (s *APIServer) Run() {
-
+	stripe.Key = "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo"
+	// params := &stripe.ChargeParams{}
+	sc := &client.API{}
+	sc.Init("sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo", nil)
 	mux := http.NewServeMux()
 	// mux = corsMiddleware(mx)
 	mux.HandleFunc("/admin/{action}/{type}", withJWTauthAdmin(makeHTTPHandleFunc(s.handleAdmin))) // post: add/delete/update-category/product; get:
 	mux.HandleFunc("/admin", withJWTauthAdmin(makeHTTPHandleFunc(s.handleAdmin)))
 	mux.HandleFunc("/products", (makeHTTPHandleFunc(s.handleProducts)))
-	mux.HandleFunc("/cart/{action}/{id}", withJWTauth(makeHTTPHandleFunc(s.handleCartActions))) // handle cart as a collection of methods, used to operate it
-
+	mux.HandleFunc("/cart/{action}/{id}", withJWTauth(makeHTTPHandleFunc(s.handleCartActions))) // handle cart as a collection of methods,
+	// used to operate it
+	// mux.HandleFunc("/create-payment-intent", withJWTauth(makeHTTPHandleFunc(handleCreatePaymentIntent)))
 	// handle the user cart as a collection of products
 	mux.HandleFunc("/cart", withJWTauth(makeHTTPHandleFunc(s.handleCart)))
 	mux.HandleFunc("/product/{id}", (makeHTTPHandleFunc(s.handleProductByID)))
@@ -73,19 +79,20 @@ func (s *APIServer) handleSearch(w http.ResponseWriter, r *http.Request) error {
 
 func (s *APIServer) handleCart(w http.ResponseWriter, r *http.Request) error {
 	email := r.Header.Get("email")
+
 	productList, err := s.store.GetCartProducts(email)
 	if r.Method == "POST" {
-		// fmt.Println("got it")
-		var sum float64
-		for i := 0; i < len(productList); i++ {
-			sum += productList[i].Price
-
-		}
-
 		// WriteJSON(w, http.StatusOK, sum)
-		fmt.Println(sum)
+		// fmt.Println(sum, "change to int prices")
+		total, err := calculateTotal(productList)
+		if err != nil {
+			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
+		}
+		handleCreatePaymentIntent(w, r, total)
 		return nil
 	}
+	// fmt.Println(sum, "not counting")
+	// handleCreatePaymentIntent(w, r, sum)
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, ApiError{Error: "something went wrong during cart handling"})
 		return err
@@ -314,7 +321,12 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 				}
 				// fmt.Println(token, "<- this mf dont wanna stick to header")
 				w.Header().Set("X-Authorization", token)
-				WriteJSON(w, http.StatusOK, token)
+				w.Header().Add("Authorization", "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo")
+				fmt.Println(w.Header().Get("Authorization"))
+				WriteJSON(w, http.StatusOK, respData{
+					XAuth: token,
+					Auth:  "Bearer " + "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo",
+				})
 				return nil
 			}
 		}
@@ -384,6 +396,11 @@ func makeHTTPHandleFunc(f APIfunc) http.HandlerFunc {
 		}
 
 	}
+}
+
+type respData struct {
+	XAuth string `json:"X-Authorization"`
+	Auth  string `json:"Authorization"`
 }
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
@@ -567,6 +584,14 @@ func isCommonMailDomain(email string) bool {
 	}
 
 	return false
+}
+
+func calculateTotal(productList []Product) (int64, error) {
+	var total int64
+	for i := 0; i < len(productList); i++ {
+		total += int64(productList[i].Price) * 100
+	}
+	return total, nil
 }
 
 // func getProductValues(row Product) (Product, error) {

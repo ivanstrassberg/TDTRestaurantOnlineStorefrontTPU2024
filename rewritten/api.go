@@ -53,6 +53,7 @@ func (s *APIServer) Run() {
 	// mux.HandleFunc("/create-payment-intent", withJWTauth(makeHTTPHandleFunc(handleCreatePaymentIntent)))
 	// handle the user cart as a collection of products
 	mux.HandleFunc("/cart", withJWTauth(makeHTTPHandleFunc(s.handleCart)))
+	mux.HandleFunc("/payment", withJWTauth(makeHTTPHandleFunc(s.handlePayment)))
 	mux.HandleFunc("/product/{id}", (makeHTTPHandleFunc(s.handleProductByID)))
 	mux.HandleFunc("/index", withJWTauth(makeHTTPHandleFunc(s.handleMain)))
 	mux.HandleFunc("/account/{id}", withJWTauth(makeHTTPHandleFunc(s.handleAccount)))
@@ -64,6 +65,22 @@ func (s *APIServer) Run() {
 	if err := http.ListenAndServe(s.listenAddr, mux); err != nil {
 		log.Fatalf("Error starting server: %s\n", err)
 	}
+}
+
+func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error {
+	if r.Method == "POST" {
+		email := r.Header.Get("email")
+
+		productList, err := s.store.GetCartProducts(email)
+		total, err := calculateTotal(productList)
+		if err != nil {
+			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
+		}
+		handleCreatePaymentIntent(w, r, total)
+
+	}
+
+	return nil
 }
 
 func (s *APIServer) handleSearch(w http.ResponseWriter, r *http.Request) error {

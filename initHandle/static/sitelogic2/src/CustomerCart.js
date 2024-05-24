@@ -15,12 +15,11 @@ const CartPage = () => {
         'X-Authorization': localStorage.getItem('X-Authorization'),
         'email': localStorage.getItem('email'),
         'Authorization': localStorage.getItem('Authorization') 
-        // im at this point above, trying to get stripe to work
       },
     })
       .then((response) => {
         if (response.status === 401) {
-            navigate('/unauthorized');
+          navigate('/unauthorized');
         }
         if (!response.ok) {
           throw new Error(`Failed to fetch cart: ${response.status}`);
@@ -31,10 +30,9 @@ const CartPage = () => {
         if (!Array.isArray(data)) {
           throw new Error("Expected an array of products");
         }
-
         const productsWithQuantity = data.map((product) => ({
           ...product,
-          quantity: 1, 
+          quantity: 1,
         }));
         setProducts(productsWithQuantity);
       })
@@ -86,30 +84,36 @@ const CartPage = () => {
   };
 
   const handleCheckout = () => {
-    // const [clientSecret, setClientSecret] = useState("");
-    fetch(`http://localhost:8080/cart`, {
+    const cartItems = products.map((product) => ({
+      productId: product.id,
+      quantity: product.quantity,
+    }));
+    console.log(cartItems)
+    fetch('http://localhost:8080/payment', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Authorization': localStorage.getItem('X-Authorization'),
         'email': localStorage.getItem('email'),
-        'Authorization': localStorage.getItem('Authorization')
+        'Authorization': localStorage.getItem('Authorization'),
       },
+      body: JSON.stringify({ cartItems }),
     })
       .then((response) => {
         if (!response.ok) {
           throw Error(`Failed to checkout product: ${response.status}`);
         }
-        console.log(response)
-        // setProducts((prevProducts) =>
-        //   prevProducts.filter((product) => product.id !== productId)
-        // );
+        return response.json();
+      })
+      .then((data) => {
+        navigate(`/checkout?payment_intent_client_secret=${data.clientSecret}`);
       })
       .catch((err) => {
         setError(err.message);
-      })
-      
+      });
   };
+
+  const total = products.reduce((sum, product) => sum + product.price * product.quantity, 0);
 
   return (
     <div className="cart-container">
@@ -117,39 +121,44 @@ const CartPage = () => {
       {error ? (
         <p className="cart-error">Error: {error}</p>
       ) : (
-        <ul className="cart-list">
-          {products.length === 0 ? (
-            <li className="cart-empty">Your cart is empty</li>
-          ) : (
-            products.map((product) => (
-              <li className="cart-item" key={product.id}>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(`/product/${product.id}`);
-                  }}
-                >
-                  {product.name} - ${product.price.toFixed(2)}
-                </a>
-                <div className="cart-quantity">
-                  <button onClick={() => decreaseQuantity(product.id)}> - </button>
-                  <span>{product.quantity}</span>
-                  <button onClick={() => increaseQuantity(product.id)}> + </button>
-                </div>
-                <button
-                  className="cart-delete"
-                  onClick={() => handleDelete(product.id)}
-                >
-                  Delete
-                </button>
-              </li>
-            ))
-          )}
-        </ul>
+        <>
+          <ul className="cart-list">
+            {products.length === 0 ? (
+              <li className="cart-empty">Your cart is empty</li>
+            ) : (
+              products.map((product) => (
+                <li className="cart-item" key={product.id}>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/product/${product.id}`);
+                    }}
+                  >
+                    {product.name} - ${product.price.toFixed(2)}
+                  </a>
+                  <div className="cart-quantity">
+                    <button onClick={() => decreaseQuantity(product.id)}> - </button>
+                    <span>{product.quantity}</span>
+                    <button onClick={() => increaseQuantity(product.id)}> + </button>
+                  </div>
+                  <button
+                    className="cart-delete"
+                    onClick={() => handleDelete(product.id)}
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+          <div className="cart-total">
+            <h2>Total: ${total.toFixed(2)}</h2>
+          </div>
+        </>
       )}
       <button
-        className="cart-delete"
+        className="cart-checkout"
         onClick={() => handleCheckout()}
       >Checkout</button>
     </div>

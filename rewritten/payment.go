@@ -26,7 +26,7 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request, sum int64
 
 	params := &stripe.PaymentIntentParams{
 
-		Amount:   stripe.Int64(sum),
+		Amount:   stripe.Int64(sum * 100),
 		Currency: stripe.String(string(stripe.CurrencyRUB)),
 		// In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
 		AutomaticPaymentMethods: &stripe.PaymentIntentAutomaticPaymentMethodsParams{

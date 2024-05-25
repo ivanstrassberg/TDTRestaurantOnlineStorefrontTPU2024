@@ -85,10 +85,10 @@ const CartPage = () => {
 
   const handleCheckout = () => {
     const cartItems = products.map((product) => ({
-      productId: product.id,
+      productID: product.id,
       quantity: product.quantity,
     }));
-    console.log(cartItems)
+    // console.log(cartItems)
     fetch('http://localhost:8080/payment', {
       method: 'POST',
       headers: {
@@ -97,7 +97,7 @@ const CartPage = () => {
         'email': localStorage.getItem('email'),
         'Authorization': localStorage.getItem('Authorization'),
       },
-      body: JSON.stringify({ cartItems }),
+      body: JSON.stringify( cartItems ),
     })
       .then((response) => {
         if (!response.ok) {

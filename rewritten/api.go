@@ -69,13 +69,27 @@ func (s *APIServer) Run() {
 
 func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == "POST" {
+		// fmt.Println("fuck")
 		email := r.Header.Get("email")
-
+		var req ([]CheckoutReq)
+		// fmt.Println("fuck2")
+		err := json.NewDecoder(r.Body).Decode(&req)
+		// fmt.Println(req)
+		if err != nil {
+			// log.Fatal(err)
+			return err
+		}
+		fmt.Println("before getting prodList")
 		productList, err := s.store.GetCartProducts(email)
-		total, err := calculateTotal(productList)
+		if err != nil {
+			return err
+		}
+		// total, err := calculateTotal(productList)
+		total, err := calculateTotal(req, productList)
 		if err != nil {
 			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
 		}
+		fmt.Println(total)
 		handleCreatePaymentIntent(w, r, total)
 
 	}
@@ -98,22 +112,22 @@ func (s *APIServer) handleCart(w http.ResponseWriter, r *http.Request) error {
 	email := r.Header.Get("email")
 
 	productList, err := s.store.GetCartProducts(email)
-	if r.Method == "POST" {
-		// WriteJSON(w, http.StatusOK, sum)
-		// fmt.Println(sum, "change to int prices")
-		total, err := calculateTotal(productList)
-		if err != nil {
-			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
-		}
-		handleCreatePaymentIntent(w, r, total)
-		return nil
-	}
-	// fmt.Println(sum, "not counting")
-	// handleCreatePaymentIntent(w, r, sum)
+	// if r.Method == "POST" {
+	// 	// WriteJSON(w, http.StatusOK, sum)
+	// 	// fmt.Println(sum, "change to int prices")
+	// 	// total, err := calculateTotal(productList)
 	if err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ApiError{Error: "something went wrong during cart handling"})
-		return err
+		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
 	}
+	// 	handleCreatePaymentIntent(w, r, total)
+	// 	return nil
+	// }
+	// // fmt.Println(sum, "not counting")
+	// // handleCreatePaymentIntent(w, r, sum)
+	// if err != nil {
+	// 	WriteJSON(w, http.StatusInternalServerError, ApiError{Error: "something went wrong during cart handling"})
+	// 	return err
+	// }
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(productList)
@@ -422,7 +436,7 @@ type respData struct {
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(status)
+	// w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
 }
 func WriteJSONResponseless(w http.ResponseWriter, status int) error {
@@ -494,7 +508,7 @@ func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		fmt.Println("calling jwt middleware")
+		// fmt.Println("calling jwt middleware")
 		tokenString := r.Header.Get("X-Authorization")
 		// fmt.Println(tokenString)
 		token, err := validateJWT(tokenString)
@@ -603,10 +617,12 @@ func isCommonMailDomain(email string) bool {
 	return false
 }
 
-func calculateTotal(productList []Product) (int64, error) {
+func calculateTotal(req []CheckoutReq, productList []Product) (int64, error) {
 	var total int64
+	// fmt.Println("before calcTotal")
+	fmt.Println(req, productList)
 	for i := 0; i < len(productList); i++ {
-		total += int64(productList[i].Price) * 100
+		total += int64(productList[i].Price) * 100 * int64(req[i].Quantity)
 	}
 	return total, nil
 }

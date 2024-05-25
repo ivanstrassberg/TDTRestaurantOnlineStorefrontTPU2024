@@ -68,3 +68,12 @@ type AuthKey struct {
 	Header string `json:"Header"`
 	Token  string `json:"Token"`
 }
+
+type CheckoutReq struct {
+	ProductID int `json:"productID"`
+	Quantity  int `json:"quantity"`
+}
+
+// type CheckoutReq struct {
+// 	Items []CheckoutItem //`json:"cartItems"`
+// }

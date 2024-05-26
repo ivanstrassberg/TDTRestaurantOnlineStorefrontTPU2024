@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +16,7 @@ import (
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/client"
+	"github.com/stripe/stripe-go/webhook"
 	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
@@ -30,14 +34,18 @@ func NewAPIServer(listenAddr string, store Storage, staticDir string) *APIServer
 	}
 }
 
-func enableCors(w *http.ResponseWriter) {
-	header := (*w).Header()
-	header.Set("Access-Control-Allow-Origin", "*")
-	header.Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
-	header.Set("Access-Control-Allow-Headers", "Content-Type, X-Authorization, X-Requested-With, email, Authorization")
-	header.Set("Access-Control-Allow-Credentials", "true")
-	// WriteJSON(*w, http.StatusOK, header)
+func enableCors(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Authorization, X-Requested-With, email, Authorization")
+	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
+
+	// if req.Method == "OPTIONS" {
+	// 	(*w).WriteHeader(http.StatusOK)
+	// 	return
+	// }
 }
+
 func (s *APIServer) Run() {
 	stripe.Key = "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo"
 	// params := &stripe.ChargeParams{}
@@ -53,6 +61,8 @@ func (s *APIServer) Run() {
 	// mux.HandleFunc("/create-payment-intent", withJWTauth(makeHTTPHandleFunc(handleCreatePaymentIntent)))
 	// handle the user cart as a collection of products
 	mux.HandleFunc("/cart", withJWTauth(makeHTTPHandleFunc(s.handleCart)))
+	mux.HandleFunc("/payment", (makeHTTPHandleFunc(s.handlePayment)))
+	mux.HandleFunc("/config", (makeHTTPHandleFunc(s.handleConfig)))
 	mux.HandleFunc("/product/{id}", (makeHTTPHandleFunc(s.handleProductByID)))
 	mux.HandleFunc("/index", withJWTauth(makeHTTPHandleFunc(s.handleMain)))
 	mux.HandleFunc("/account/{id}", withJWTauth(makeHTTPHandleFunc(s.handleAccount)))
@@ -66,7 +76,81 @@ func (s *APIServer) Run() {
 	}
 }
 
+func (s *APIServer) handleWebhook(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != "POST" {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return nil
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("ioutil.ReadAll: %v", err)
+		return err
+	}
+
+	event, err := webhook.ConstructEvent(b, r.Header.Get("Stripe-Signature"), "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("webhook.ConstructEvent: %v", err)
+		return err
+	}
+
+	if event.Type == "checkout.session.completed" {
+		fmt.Println("Checkout Session completed!")
+	}
+
+	writeJSON(w, r, nil)
+	return nil
+}
+
+func (s *APIServer) handleConfig(w http.ResponseWriter, r *http.Request) error {
+	enableCors(&w, r)
+	if r.Method != "GET" {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return nil
+	}
+	writeJSON(w, r, struct {
+		PublishableKey string `json:"publishableKey"`
+	}{
+		PublishableKey: "pk_test_51PGBY6RsvEv5vPVlHUbe5pB27TSwBnFGH7t93QSkoef6FEy1hobnSCmWSJDk3cnQgj1Wrf9TybhyEyu79ZEtuNST00aSiTI6Vg",
+	})
+	return nil
+}
+
+func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error {
+	enableCors(&w, r)
+	// if r.Method == "POST" {
+	// fmt.Println("fuck")
+	email := r.Header.Get("email")
+	var req ([]CheckoutReq)
+	// fmt.Println("fuck2")
+	err := json.NewDecoder(r.Body).Decode(&req)
+	// fmt.Println(req)
+	if err != nil {
+		// log.Fatal(err)
+		return err
+	}
+	// fmt.Println("before getting prodList")
+	productList, err := s.store.GetCartProducts(email)
+	if err != nil {
+		return err
+	}
+	// total, err := calculateTotal(productList)
+	total, err := calculateTotal(req, productList)
+	if err != nil {
+		// fmt.Println("fucied")
+		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
+	}
+	fmt.Println(total)
+	handleCreatePaymentIntent(w, r, total)
+
+	// }
+
+	return nil
+}
+
 func (s *APIServer) handleSearch(w http.ResponseWriter, r *http.Request) error {
+	enableCors(&w, r)
 	key := r.PathValue("key")
 	products, err := s.store.SearchProducts(key)
 	if err != nil {
@@ -81,22 +165,22 @@ func (s *APIServer) handleCart(w http.ResponseWriter, r *http.Request) error {
 	email := r.Header.Get("email")
 
 	productList, err := s.store.GetCartProducts(email)
-	if r.Method == "POST" {
-		// WriteJSON(w, http.StatusOK, sum)
-		// fmt.Println(sum, "change to int prices")
-		total, err := calculateTotal(productList)
-		if err != nil {
-			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
-		}
-		handleCreatePaymentIntent(w, r, total)
-		return nil
-	}
-	// fmt.Println(sum, "not counting")
-	// handleCreatePaymentIntent(w, r, sum)
+	// if r.Method == "POST" {
+	// 	// WriteJSON(w, http.StatusOK, sum)
+	// 	// fmt.Println(sum, "change to int prices")
+	// 	// total, err := calculateTotal(productList)
 	if err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ApiError{Error: "something went wrong during cart handling"})
-		return err
+		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
 	}
+	// 	handleCreatePaymentIntent(w, r, total)
+	// 	return nil
+	// }
+	// // fmt.Println(sum, "not counting")
+	// // handleCreatePaymentIntent(w, r, sum)
+	// if err != nil {
+	// 	WriteJSON(w, http.StatusInternalServerError, ApiError{Error: "something went wrong during cart handling"})
+	// 	return err
+	// }
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(productList)
@@ -386,7 +470,7 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 
 func makeHTTPHandleFunc(f APIfunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		enableCors(&w)
+		enableCors(&w, r)
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -405,7 +489,7 @@ type respData struct {
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(status)
+	// w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
 }
 func WriteJSONResponseless(w http.ResponseWriter, status int) error {
@@ -472,16 +556,17 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		enableCors(&w)
+		enableCors(&w, r)
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		fmt.Println("calling jwt middleware")
+		// fmt.Println("calling jwt middleware")
 		tokenString := r.Header.Get("X-Authorization")
 		// fmt.Println(tokenString)
 		token, err := validateJWT(tokenString)
 		if err != nil {
+			fmt.Println("yeah not authorized")
 			WriteJSON(w, http.StatusUnauthorized, ApiError{Error: "forbidden"})
 			return
 		}
@@ -505,7 +590,7 @@ func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 
 func withJWTauthAdmin(handleFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		enableCors(&w)
+		enableCors(&w, r)
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -586,12 +671,29 @@ func isCommonMailDomain(email string) bool {
 	return false
 }
 
-func calculateTotal(productList []Product) (int64, error) {
+func calculateTotal(req []CheckoutReq, productList []Product) (int64, error) {
 	var total int64
+	// fmt.Println("before calcTotal")
+	fmt.Println(req, productList)
 	for i := 0; i < len(productList); i++ {
-		total += int64(productList[i].Price) * 100
+		total += int64(productList[i].Price) * 100 * int64(req[i].Quantity)
 	}
 	return total, nil
+}
+
+func writeJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(v); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("json.NewEncoder.Encode: %v", err)
+		return
+	}
+	// enableCors(&w,r)
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := io.Copy(w, &buf); err != nil {
+		log.Printf("io.Copy: %v", err)
+		return
+	}
 }
 
 // func getProductValues(row Product) (Product, error) {

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CartPage.css'; // Import the CSS file for styling
-
+// import React, { useEffect, useState } from "react";
+import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 const CartPage = () => {
   const [products, setProducts] = useState([]);
   const [error, setError] = useState(null);
@@ -107,7 +108,11 @@ const CartPage = () => {
       })
       .then((data) => {
         navigate(`/checkout?payment_intent_client_secret=${data.clientSecret}`);
+
+
+        
       })
+      
       .catch((err) => {
         setError(err.message);
       });

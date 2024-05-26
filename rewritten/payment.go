@@ -46,41 +46,9 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request, sum int64
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, struct {
+	writeJSON(w, r, struct {
 		ClientSecret string `json:"clientSecret"`
 	}{
 		ClientSecret: pi.ClientSecret,
 	})
 }
-
-// func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request, sum int64) {
-// 	if r.Method != "POST" {
-// 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-// 		return
-// 	}
-
-// 	// Create a PaymentIntent with amount and currency
-// 	params := &stripe.PaymentIntentParams{
-// 		Amount:   stripe.Int64(sum),
-// 		Currency: stripe.String(string(stripe.CurrencyRUB)),
-// 		// In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-// 		AutomaticPaymentMethods: &stripe.PaymentIntentAutomaticPaymentMethodsParams{
-// 			Enabled: stripe.Bool(true),
-// 		},
-// 	}
-
-// 	pi, err := paymentintent.New(params)
-// 	log.Printf("pi.New: %v", pi.ClientSecret)
-
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		log.Printf("pi.New: %v", err)
-// 		return
-// 	}
-
-// 	WriteJSON(w, http.StatusOK, struct {
-// 		ClientSecret string `json:"clientSecret"`
-// 	}{
-// 		ClientSecret: pi.ClientSecret,
-// 	})
-// }

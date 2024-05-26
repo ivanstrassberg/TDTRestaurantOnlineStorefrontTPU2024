@@ -29,6 +29,7 @@ const CartPage = () => {
       })
       .then((data) => {
         if (!Array.isArray(data)) {
+          navigate('/unauthorized');
           throw new Error("Expected an array of products");
         }
         const productsWithQuantity = data.map((product) => ({
@@ -108,9 +109,6 @@ const CartPage = () => {
       })
       .then((data) => {
         navigate(`/checkout?payment_intent_client_secret=${data.clientSecret}`);
-
-
-        
       })
       
       .catch((err) => {

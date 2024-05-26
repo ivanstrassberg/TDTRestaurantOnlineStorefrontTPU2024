@@ -40,10 +40,10 @@ func enableCors(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Authorization, X-Requested-With, email, Authorization")
 	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
 
-	if req.Method == "OPTIONS" {
-		(*w).WriteHeader(http.StatusOK)
-		return
-	}
+	// if req.Method == "OPTIONS" {
+	// 	(*w).WriteHeader(http.StatusOK)
+	// 	return
+	// }
 }
 
 func (s *APIServer) Run() {
@@ -566,6 +566,7 @@ func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 		// fmt.Println(tokenString)
 		token, err := validateJWT(tokenString)
 		if err != nil {
+			fmt.Println("yeah not authorized")
 			WriteJSON(w, http.StatusUnauthorized, ApiError{Error: "forbidden"})
 			return
 		}

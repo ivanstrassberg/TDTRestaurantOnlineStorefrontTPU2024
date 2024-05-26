@@ -86,23 +86,23 @@ function App() {
 
   const [clientSecret, setClientSecret] = useState("");
   const [ stripePromise, setStripePromise ] = useState(null);
-  // useEffect(() => {
-  //   fetch("http://localhost:8080/payment", 
-  //   {
-  //     method: "GET",
-  //     headers: { "Content-Type": "application/json" }
-  //   })
-  //     .then((res) => res.json())
-  //     .then((data) => setClientSecret(data.clientSecret));
-  // }, []);
-
   useEffect(() => {
-    fetch("http://localhost:8080/config").then(async (r) => {
-      const { publishableKey } = await r.json();
-      setStripePromise(loadStripe(publishableKey));
-      console.log(publishableKey);
-    });
+    fetch("http://localhost:8080/config", 
+    {
+      method: "GET",
+      headers: { "Content-Type": "application/json" }
+    })
+      .then((res) => res.json())
+      .then((data) => setClientSecret(data.clientSecret));
   }, []);
+
+  // useEffect(() => {
+  //   fetch("http://localhost:8080/config").then(async (r) => {
+  //     const { publishableKey } = await r.json();
+  //     setStripePromise(loadStripe(publishableKey));
+  //     console.log(publishableKey);
+  //   });
+  // }, []);
   
   // const path = "/checkout?payment_intent_client_secret=" + clientSecret;
   const appearance = { theme: 'stripe' };
@@ -122,7 +122,8 @@ function App() {
         <Route path="/product/:id" element={<ProductDetail />} /> {/* Product detail */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} /> {/* Unauthorized page */}
         <Route path="/search/:key" element={<ProductSearch />} /> {/* Search results */}
-        {/* <Route path="/checkout" component={CheckoutForm} /> */}
+        
+        {/* <Route path="/checkout" element={<CheckoutForm/>} /> */}
       
         {clientSecret && (
           <Route path="/checkout" element={

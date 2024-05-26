@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CartPage.css'; // Import the CSS file for styling
-// import React, { useEffect, useState } from "react";
-import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import CheckoutForm from './CheckoutForm';
+
+const stripePromise = loadStripe("pk_test_51PGBY6RsvEv5vPVlHUbe5pB27TSwBnFGH7t93QSkoef6FEy1hobnSCmWSJDk3cnQgj1Wrf9TybhyEyu79ZEtuNST00aSiTI6Vg");
+
 const CartPage = () => {
   const [products, setProducts] = useState([]);
+  const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -90,7 +95,7 @@ const CartPage = () => {
       productID: product.id,
       quantity: product.quantity,
     }));
-    // console.log(cartItems)
+
     fetch('http://localhost:8080/payment', {
       method: 'POST',
       headers: {
@@ -99,7 +104,7 @@ const CartPage = () => {
         'email': localStorage.getItem('email'),
         'Authorization': localStorage.getItem('Authorization'),
       },
-      body: JSON.stringify( cartItems ),
+      body: JSON.stringify(cartItems),
     })
       .then((response) => {
         if (!response.ok) {
@@ -108,9 +113,8 @@ const CartPage = () => {
         return response.json();
       })
       .then((data) => {
-        navigate(`/checkout?payment_intent_client_secret=${data.clientSecret}`);
+        setClientSecret(data.clientSecret);
       })
-      
       .catch((err) => {
         setError(err.message);
       });
@@ -160,10 +164,16 @@ const CartPage = () => {
           </div>
         </>
       )}
-      <button
-        className="cart-checkout"
-        onClick={() => handleCheckout()}
-      >Checkout</button>
+      {clientSecret ? (
+        <Elements options={{ clientSecret }} stripe={stripePromise}>
+          <CheckoutForm />
+        </Elements>
+      ) : (
+        <button
+          className="cart-checkout"
+          onClick={() => handleCheckout()}
+        >Checkout</button>
+      )}
     </div>
   );
 };

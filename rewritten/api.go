@@ -365,6 +365,14 @@ func (s *APIServer) handleMain(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
+	if r.Method == http.MethodOptions {
+		(w).Header().Set("Access-Control-Allow-Origin", "*")
+		(w).Header().Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+		(w).Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Authorization, X-Requested-With, email, Authorization")
+		(w).Header().Set("Access-Control-Allow-Credentials", "true")
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
 
 	if r.Method == "POST" {
 
@@ -372,14 +380,6 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		if err := json.NewDecoder(r.Body).Decode(regReq); err != nil {
 			return err
 		}
-		// password, err := HashPassword(regReq.PasswordHash)
-		// if err != nil {
-		// 	return err
-		// }
-		// fmt.Println(regReq.Email, password)
-		// hashed, err := HashPassword(regReq.PasswordHash)
-		// todo rework that, return the password, then de-hash and compare
-		//  confirm if all good
 		passDB, err := s.store.GetPassword(regReq.Email)
 		if err != nil {
 			return err
@@ -390,6 +390,10 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		// check := CheckPasswordHash(regReq.PasswordHash, passDB)
 		fmt.Println(check)
 		// check := true
+		if !check {
+			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "nope"})
+			return nil
+		}
 		if check {
 			resp, err := s.store.LoginCustomer(regReq.Email, passDB)
 
@@ -397,16 +401,16 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 				WriteJSON(w, http.StatusBadRequest, ApiError{Error: "does not exist, or wrong password"})
 				return err
 			}
-			// fmt.Println(resp)
+			// fmt.Println(resp, "this is a response")
 			if resp {
 				token, err := generateJWT(regReq.Email)
 				if err != nil {
 					return err
 				}
 				// fmt.Println(token, "<- this mf dont wanna stick to header")
-				w.Header().Set("X-Authorization", token)
-				w.Header().Add("Authorization", "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo")
-				fmt.Println(w.Header().Get("Authorization"))
+				// w.Header().Set("X-Authorization", token)
+				// w.Header().Add("Authorization", "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo")
+				// fmt.Println(w.Header().Get("Authorization"))
 				WriteJSON(w, http.StatusOK, respData{
 					XAuth: token,
 					Auth:  "Bearer " + "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo",
@@ -566,7 +570,7 @@ func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 		// fmt.Println(tokenString)
 		token, err := validateJWT(tokenString)
 		if err != nil {
-			fmt.Println("yeah not authorized")
+			// fmt.Println("yeah not authorized")
 			WriteJSON(w, http.StatusUnauthorized, ApiError{Error: "forbidden"})
 			return
 		}
@@ -591,6 +595,7 @@ func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 func withJWTauthAdmin(handleFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		enableCors(&w, r)
+
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return

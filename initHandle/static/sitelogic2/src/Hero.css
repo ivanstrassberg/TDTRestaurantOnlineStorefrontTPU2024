@@ -1,28 +1,89 @@
+/* @font-face {
+  font-display: swap;
+  font-family: "Amiko";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/amiko-v14-latin-regular.woff2") format("woff2");
+}
 
+@font-face {
+  font-display: swap;
+  font-family: "Alumni Sans";
+  font-style: normal;
+  font-weight: 300;
+  src: url("../fonts/alumni-sans-v18-latin-300.woff2") format("woff2");
+} */
 
-.hero-container {
-    background-image: url('https://cdn.vox-cdn.com/thumbor/5d_RtADj8ncnVqh-afV3mU-XQv0=/0x0:1600x1067/1200x900/filters:focal(672x406:928x662)/cdn.vox-cdn.com/uploads/chorus_image/image/57698831/51951042270_78ea1e8590_h.7.jpg');
-    background-size: cover;
-    background-position: center;
-    height: 50vh; 
-    position: relative;
-  }
-  
-  .hero-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    color: #fff;
-  }
-  
-  .hero-content h1 {
-    font-size: 3rem;
-    margin-bottom: 20px;
-  }
-  
-  .hero-content p {
-    font-size: 1.2rem;
-  }
-  
+html {
+  box-sizing: border-box;
+  background-color: #f6f6f6;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+.about-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f6f6f6;
+}
+
+.about-container {
+  width: 80%;
+  max-width: 1320px;
+  padding: 40px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
+  backdrop-filter: blur(10px); /* Frosted glass effect */
+  box-shadow: 0px 6px 12px 0px rgba(0, 0, 0, 0.25);
+  background-image: url("/Users/ivansilin/Documents/coding/golang/foodShop/initHandle/static/sitelogic2/src/css/about.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  padding: 40px;
+}
+
+.about-title {
+  font-family: 'Alumni Sans', sans-serif;
+  font-size: 48px;
+  font-weight: 300;
+  margin-bottom: 40px;
+  color: #333;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
+  backdrop-filter: blur(1px); /* Frosted glass effect */
+  box-shadow: 0px 6px 12px 0px rgba(0, 0, 0, 0.25);
+  padding: 15px;
+}
+
+.about-list {
+  list-style: none;
+  padding-left: 20px;
+}
+
+.about-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  font-family: 'Lucida Sans', Geneva, Verdana, sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: #333;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
+  backdrop-filter: blur(1px); /* Frosted glass effect */
+  box-shadow: 0px 6px 12px 0px rgba(0, 0, 0, 0.25);
+  padding: 15px;
+}
+
+.about-item svg {
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+

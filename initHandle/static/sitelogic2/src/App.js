@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import './App.css'; // Import styles
 import '../src/css/logo.png';
@@ -27,63 +27,169 @@ import Payment from './Payment';
 const stripePromise = loadStripe("pk_test_51PGBY6RsvEv5vPVlHUbe5pB27TSwBnFGH7t93QSkoef6FEy1hobnSCmWSJDk3cnQgj1Wrf9TybhyEyu79ZEtuNST00aSiTI6Vg");
 
 const Header = () => {
+  const svgIcon = (
+    <svg width="18" height="23" viewBox="0 0 18 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16.875 0C16.875 6.44062 0 3.22031 0 16.1016C0 20.932 1.875 22.5422 1.875 22.5422H3.75C3.75 22.5422 0.9375 20.932 0.9375 16.1016C0.9375 12.8812 9.375 9.66094 9.375 9.66094C9.375 9.66094 1.89375 13.1453 1.89375 16.4526C13.8309 18.0579 20.4394 6.12342 16.8741 0H16.875Z" fill="#7C9827"/>
+    </svg>
+  );
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate(); // Navigation hook for redirection
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const navigate = useNavigate();
+  const isLoggedIn = localStorage.getItem('X-Authorization') !== null;
 
   const handleSearch = (e) => {
-    e.preventDefault(); // Prevent the default form submission behavior
+    e.preventDefault();
     if (searchTerm.trim() !== '') {
-      // Navigate to the search endpoint with the search term
       navigate(`/search/${searchTerm.trim()}`);
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuRef]);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('X-Authorization');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp < Date.now() / 1000) {
+          localStorage.removeItem('X-Authorization');
+          setMenuOpen(false);
+          navigate('/login');
+        }
+      }
+    };
+
+    const interval = setInterval(checkAuth, 60000);
+    return () => clearInterval(interval);
+  }, [navigate]);
 
   return (
     <header className="header">
       <nav className="navbar">
         <div className="container">
-          <p className="navbar-brand">
-          
-          </p>
           <div className="navbar-wrap">
-            <ul className="navbar-menu">
-              <li><Link to="/">Home</Link></li>
-              {/* <li><Link to="/admin">Admin</Link></li> */}
-              <li><Link to="/login">Login</Link></li>
-              <li><Link to="/register">Register</Link></li>
-              <li><Link to="/cart">Cart</Link></li>
-              <li><Link to="/products">Menu</Link></li>
-            </ul>
-            <form onSubmit={handleSearch} className="search-form" style={{ textAlign: 'center', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <input
-                type="text"
-                value={searchTerm} // Controlled component
-                onChange={(e) => setSearchTerm(e.target.value)} // Update state on input
-                placeholder="Search..." // Placeholder text
-                style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc', marginRight: '10px', width: '70%' }}
-              />
-              <button type="submit" style={{ padding: '10px', backgroundColor: 'black', color: '#fff', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>Search</button>
-            </form>
+            <div className="logo">
+              <Link to="/">{svgIcon}</Link>
+            </div>
+            <div className="desktop-menu">
+              <ul className="navbar-menu">
+                <li><Link to="/">Главная</Link></li>
+                <li><Link to="/cart">Корзина</Link></li>
+                <li><Link to="/products">Меню</Link></li>
+                {!isLoggedIn && (
+                  <>
+                    <li><Link to="/login">Войти</Link></li>
+                    {/* <li><Link to="/register">Register</Link></li> */}
+                  </>
+                )}
+                {isLoggedIn && (
+                  <li className="profile-menu">
+                    <img
+                      src="https://via.placeholder.com/50"
+                      alt="Profile"
+                      className="profile-img"
+                      onClick={() => setMenuOpen(!menuOpen)}
+                    />
+                    {menuOpen && (
+                      <div className="profile-dropdown" ref={menuRef}>
+                        <ul>
+                          <li><Link to="/orders">Заказы</Link></li>
+                          <li><Link to="/settings">Настройки</Link></li>
+                          <li>
+                            <button onClick={() => {
+                              localStorage.removeItem('X-Authorization');
+                              setMenuOpen(false);
+                            }}>Выйти</button>
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                )}
+              </ul>
+              
+              <form onSubmit={handleSearch} className="search-form">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search..."
+                />
+                <button type="submit">Search</button>
+              </form>
+            </div>
+            <div className="mobile-menu-toggle">
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                <span>☰</span>
+              </button>
+              {mobileMenuOpen && (
+                <div className="mobile-menu">
+                  <ul>
+                    <li><Link to="/" onClick={() => setMobileMenuOpen(false)}>Главная</Link></li>
+                    {!isLoggedIn && (
+                      <>
+                        <li><Link to="/login" onClick={() => setMobileMenuOpen(false)}>Войти</Link></li>
+                        {/* <li><Link to="/register" onClick={() => setMobileMenuOpen(false)}>Register</Link></li> */}
+                      </>
+                    )}
+                    {isLoggedIn && (
+                      <>
+                        <li><Link to="/orders" onClick={() => setMobileMenuOpen(false)}>Заказы</Link></li>
+                        <li><Link to="/settings" onClick={() => setMobileMenuOpen(false)}>Настройки</Link></li>
+                        <li>
+                          <button onClick={() => {
+                            localStorage.removeItem('X-Authorization');
+                            setMobileMenuOpen(false);
+                          }}>Выйти</button>
+                        </li>
+                      </>
+                    )}
+                    <li><Link to="/cart" onClick={() => setMobileMenuOpen(false)}>Корзина</Link></li>
+                    <li><Link to="/products" onClick={() => setMobileMenuOpen(false)}>Меню</Link></li>
+                  </ul>
+                  <form onSubmit={handleSearch} className="search-form">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search..."
+                    />
+                    <button type="submit">Search</button>
+                  </form>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </nav>
     </header>
   );
 };
-
 function App() {
   const [clientSecret, setClientSecret] = useState("");
 
-  useEffect(() => {
-    // Create PaymentIntent as soon as the page loads
-    fetch("/create-payment-intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: [{ id: "xl-tshirt" }] }),
-    })
-      .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret));
-  }, []);
+  // useEffect(() => {
+  //   // Create PaymentIntent as soon as the page loads
+  //   fetch("/create-payment-intent", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ items: [{ id: "xl-tshirt" }] }),
+  //   })
+  //     .then((res) => res.json())
+  //     .then((data) => setClientSecret(data.clientSecret));
+  // }, []);
 
   const appearance = {
     theme: 'stripe',
@@ -120,6 +226,8 @@ function App() {
       </Routes>
       {/* <Footer /> */}
     </Router>
+ 
+
   );
 };
 

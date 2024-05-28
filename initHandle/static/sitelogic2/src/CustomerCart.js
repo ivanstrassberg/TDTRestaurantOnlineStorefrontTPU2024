@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './CartPage.css'; // Import the CSS file for styling
+import './CartPage.css';
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import CheckoutForm from './CheckoutForm';
@@ -25,7 +25,7 @@ const CartPage = () => {
     })
       .then((response) => {
         if (response.status === 401) {
-          navigate('/unauthorized');
+          navigate('/login');
         }
         if (!response.ok) {
           throw new Error(`Failed to fetch cart: ${response.status}`);
@@ -34,7 +34,7 @@ const CartPage = () => {
       })
       .then((data) => {
         if (!Array.isArray(data)) {
-          navigate('/unauthorized');
+          navigate('/login');
           throw new Error("Expected an array of products");
         }
         const productsWithQuantity = data.map((product) => ({
@@ -142,7 +142,7 @@ const CartPage = () => {
                       navigate(`/product/${product.id}`);
                     }}
                   >
-                    {product.name} - ${product.price.toFixed(2)}
+                    {product.name} - {product.price.toFixed(2)} руб.
                   </a>
                   <div className="cart-quantity">
                     <button onClick={() => decreaseQuantity(product.id)}> - </button>
@@ -160,7 +160,7 @@ const CartPage = () => {
             )}
           </ul>
           <div className="cart-total">
-            <h2>Total: ${total.toFixed(2)}</h2>
+            <h2>Total: {total.toFixed(2)} руб. </h2>
           </div>
         </>
       )}

@@ -121,3 +121,135 @@ html {
     margin: 0;
   }
   
+  .main {
+    padding: 20px;
+  }
+  
+  .promo {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /* width: 700px; */
+  }
+  
+  .promo_list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .promo_list_item {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .promo_list_item_logo {
+    width: 50px;
+    height: 50px;
+    margin-right: 20px;
+  }
+  
+  .cont_promo_info {
+    flex: 1;
+  }
+  
+  .promo_list_txt_bold {
+    font-weight: bold;
+    margin: 0 0 10px;
+    width: 100%; /* Define a width, adjust as needed */
+  }
+  
+  .promo_list_txt {
+    margin: 10px;
+  }
+  
+  /* Add media queries for responsiveness if needed */
+  @media (max-width: 768px) {
+    .promo_list_item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .promo_list_item_logo {
+      margin-bottom: 10px;
+    }
+  }
+
+  /* MainTest.css */
+.mobile-menu {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.9); /* Background color */
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  padding: 10px;
+  z-index: 100;
+  width: calc(100% - 40px);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-menu ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-menu ul li {
+  margin-bottom: 10px;
+}
+
+.mobile-menu ul li a {
+  color: rgb(161, 189, 77); /* Primary color */
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.mobile-menu ul li a:hover {
+  color: #FFC107; /* Secondary color */
+}
+
+.mobile-menu ul li button {
+  background-color: rgb(161, 189, 77); /* Primary color */
+  border: none;
+  color: #FFFFFF; /* Text color */
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.search-form input {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  width: calc(100% - 70px);
+}
+
+.search-form button {
+  padding: 10px;
+  background-color: rgb(161, 189, 77); /* Primary color */
+  color: #FFFFFF; /* Text color */
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  width: 60px;
+}
+
+
+
+  
+  

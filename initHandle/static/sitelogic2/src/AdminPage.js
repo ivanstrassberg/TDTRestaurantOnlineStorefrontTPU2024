@@ -2,6 +2,35 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminPage = () => {
+  const navigate = useNavigate(); 
+  navigate('/unauthorized');
+  // Navigation hook for redirection
+  useEffect(() => {
+    navigate('/unauthorized');
+    fetch('http://localhost:8080/admin', { 
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Authorization': localStorage.getItem('X-Authorization'),
+        'email': localStorage.getItem('email'),
+      },
+    })
+    
+    .then((response) => {
+      if (response.status === 401) {
+        navigate('/unauthorized');
+      }
+      if (!response.ok) {
+
+        navigate('/unauthorized');
+      }
+      return response.json();
+    })
+      .catch((error) => {
+        console.error("Error checking authorization:", error); 
+        navigate('/unauthorized');
+      });
+  }, [navigate]); 
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -10,7 +39,7 @@ const AdminPage = () => {
   const [categoryId, setCategoryId] = useState('');
   const [message, setMessage] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(true); // Authorization flag
-  const navigate = useNavigate(); // Navigation hook for redirection
+
 
   const handleStockChange = (e) => {
     const value = e.target.value;
@@ -26,25 +55,7 @@ const AdminPage = () => {
     const value = e.target.value;
     setCategoryId(value === '' ? '' : parseInt(value, 10)); // Handle empty input
   };
-  useEffect(() => {
-    fetch('http://localhost:8080/admin', { 
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Authorization': localStorage.getItem('X-Authorization'),
-        'email': localStorage.getItem('email'),
-      },
-    })
-      .then((response) => {
-        if (response.status === 401) { 
-          setIsAuthorized(false); 
-          navigate('/unauthorized'); 
-        }
-      })
-      .catch((error) => {
-        console.error("Error checking authorization:", error); 
-      });
-  }, [navigate]); 
+
 
   if (!isAuthorized) {
     return null; 

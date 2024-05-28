@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/catalogue.css" />
+    <title>Catalogue</title>
+  </head>
+  <body>
+    <header class="header">
+      <div class="wrapper">
+        <div class="logo">
+          <a href="index.html" class="logo"
+            ><img
+              src="img/Logo.svg"
+              alt="logo"
+              class="head_logo"
+            />NatureNook</a
+          >
+        </div>
+        <div class="header_info">
+          <h1 class="header_naming">Каталог</h1>
+          <div class="bar_words">
+            <div class="words">
+              <p class="word">готовая еда</p>
+              <p class="word">напитки</p>
+              <p class="word">плоды</p>
+            </div>
+            <input type="range" class="slider" min="0" max="2" value="0" />
+          </div>
+          <form class="header_search" id="searchForm">
+            <input type="search" id="searchInput" placeholder="Поиск..." />
+            <button type="submit">Найти</button>
+          </form>
+          <a href="cart.html" class="cart"
+            ><img src="img/bucket.svg" alt="logo_bucket"
+          /></a>
+        </div>
+      </div>
+    </header>
+    <main>
+      <div class="goods">
+        <div class="goods_cards">
+          <!-- Категория "готовая еда" (заглушка) -->
+          <div
+            class="card category-ready-meal"
+            data-id="6"
+            data-name="Рулетики"
+            data-price="555"
+          >
+            <img src="img/meal1.png" alt="placeholder" />
+            <div class="card_info">
+              <p class="card_name">Рулетики</p>
+              <p class="mess_info">Овощные, 5 шт.</p>
+              <p class="price">555 руб.</p>
+              <button class="add_cart">Добавить в корзину</button>
+            </div>
+          </div>
+          <!-- Категория "напитки" (заглушка) -->
+          <div
+            class="card category-drinks"
+            data-id="7"
+            data-name="Манговый сок"
+            data-price="235"
+          >
+            <img src="img/drink1.png" alt="placeholder" />
+            <div class="card_info">
+              <p class="card_name">Манговый сок</p>
+              <p class="mess_info">Свежевыжатый, 300 мл.</p>
+              <p class="price">235 ₽</p>
+              <button class="add_cart">Добавить в корзину</button>
+            </div>
+          </div>
+          <!-- Категория "плоды" (все карточки) -->
+          <div
+            class="card category-fruit"
+            data-id="1"
+            data-name="Бонони"
+            data-price="170"
+          >
+            <img src="img/bononi.png" alt="card1" />
+            <div class="card_info">
+              <p class="card_name">Бонони</p>
+              <p class="mess_info">1кг</p>
+              <p class="price">170 ₽</p>
+              <button class="add_cart">Добавить в корзину</button>
+            </div>
+          </div>
+          <div
+            class="card category-fruit"
+            data-id="2"
+            data-name="Яблоко"
+            data-price="185"
+          >
+            <img src="img/apple.png" alt="card2" />
+            <div class="card_info">
+              <p class="card_name">Яблоко</p>
+              <p class="mess_info">1кг</p>
+              <p class="price">185 ₽</p>
+              <button class="add_cart">Добавить в корзину</button>
+            </div>
+          </div>
+          <div
+            class="card category-fruit"
+            data-id="3"
+            data-name="Апельсин"
+            data-price="265"
+          >
+            <img src="img/orange.png" alt="card3" />
+            <div class="card_info">
+              <p class="card_name">Апельсин</p>
+              <p class="mess_info">1кг</p>
+              <p class="price">265 ₽</p>
+              <button class="add_cart">Добавить в корзину</button>
+            </div>
+          </div>
+          <div
+            class="card category-fruit"
+            data-id="4"
+            data-name="Ананас"
+            data-price="535"
+          >
+            <img src="img/pineapple.png" alt="card4" />
+            <div class="card_info">
+              <p class="card_name">Ананас</p>
+              <p class="mess_info">1кг</p>
+              <p class="price">535 ₽</p>
+              <button class="add_cart">Добавить в корзину</button>
+            </div>
+          </div>
+          <div
+            class="card category-fruit"
+            data-id="5"
+            data-name="Микс ягод"
+            data-price="755"
+          >
+            <img src="img/dry berries mix.png" alt="card5" />
+            <div class="card_info">
+              <p class="card_name">Микс сушённых ягод</p>
+              <p class="mess_info">1кг</p>
+              <p class="price">755 ₽</p>
+              <button class="add_cart">Добавить в корзину</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script src="js/catalogue.js"></script>
+  </body>
+</html>

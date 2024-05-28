@@ -1,0 +1,186 @@
+/* catalogue.css */
+
+/* amiko-regular - latin */
+@font-face {
+  font-display: swap;
+  font-family: "Amiko";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/amiko-v14-latin-regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Alumni Sans";
+  font-style: normal;
+  font-weight: 300;
+  src: url("../fonts/alumni-sans-v18-latin-300.woff2") format("woff2");
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.header {
+  max-width: 1600px;
+  height: 136px;
+  box-shadow: 0px 5px 10px 0px #00000040;
+}
+
+.wrapper {
+  padding-top: 25px;
+  padding-left: 48px;
+}
+
+.logo {
+  font-size: 20px;
+}
+
+.header_info {
+  display: flex;
+}
+
+.header_naming {
+  padding-top: 5px;
+  font-size: 45px;
+}
+
+.bar_words {
+  padding-left: 150px;
+  padding-top: 20px;
+}
+
+.words {
+  width: 320px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 19px;
+  display: flex;
+  justify-content: space-between;
+  word-wrap: break-word;
+  margin-bottom: 10px; /* Добавим немного пространства между словами и ползунком */
+}
+
+.slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4caf50;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: #45a049;
+}
+
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4caf50;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+  background: #45a049;
+}
+
+.header_search {
+  padding-top: 20px;
+  padding-left: 302px;
+}
+
+.cart {
+  padding-left: 200px;
+}
+
+.goods_cards {
+  padding-left: 48px;
+  padding-top: 58px;
+  padding-right: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-gap: 32px;
+}
+
+.card {
+  max-width: 217px;
+  height: 300px;
+  box-shadow: -1px 6px 12px 0px #00000040;
+  border-radius: 12px;
+  opacity: 0;
+  transform: translateY(40px); /* Смещение для анимации */
+  transition: opacity 1s ease, transform 1s ease; /* Добавляем анимацию */
+}
+
+.card.active {
+  opacity: 1; /* Полная непрозрачность */
+  transform: translateY(0); /* Возвращаем в исходное положение */
+}
+
+.card.hidden {
+  display: none; /* Полностью скрываем элемент */
+}
+
+.card_name {
+  padding-left: 0px;
+}
+
+.card_info {
+  padding-top: 12px;
+  padding-left: 14px;
+}
+
+.mess_info {
+  padding-top: 12px;
+}
+
+.price {
+  padding-top: 20px;
+  padding-bottom: 8px;
+}
+
+.add_cart {
+  font-size: 6px;
+  width: 107px;
+  height: 20px;
+  background-color: #a1bd4d;
+  color: #f6f6f6;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.add_cart:hover {
+  opacity: 0.8;
+}

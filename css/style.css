@@ -1,0 +1,124 @@
+/* amiko-regular - latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "Amiko";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/amiko-v14-latin-regular.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "Alumni Sans";
+  font-style: normal;
+  font-weight: 300;
+  src: url("../fonts/alumni-sans-v18-latin-300.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+.wrapper {
+  max-width: 100%;
+  margin: 0 auto;
+  height: 136px;
+  background-color: #f6f6f6;
+  box-shadow: 0px 5px 10px 0px #00000040;
+  display: flex;
+  font-family: "Amiko";
+  font-style: normal;
+  font-size: 19px;
+}
+
+.header_logo {
+  max-width: 141px;
+  padding-top: 57px;
+  padding-left: 48px;
+  display: flex;
+  vertical-align: middle;
+}
+.naming {
+  font-size: 21px;
+  padding-left: 1px;
+  color: #282e14;
+}
+
+.header_nav {
+  margin-left: 500px;
+  margin-top: 41px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.header_list {
+  max-width: 800px;
+}
+
+.header_item {
+  display: inline;
+  margin-right: 40px;
+}
+
+.header_link {
+  color: #282e14;
+  text-decoration: none;
+}
+
+.header_link:hover {
+  opacity: 0.7;
+}
+
+.card1 {
+  width: 600px;
+  height: 477px;
+  margin-left: 48px;
+  margin-top: 27px;
+  box-shadow: -1px 6px 12px 0px #00000040;
+  border-radius: 12px;
+}
+
+.card1_h1 {
+  font-family: "Alumni Sans";
+  font-style: 300px;
+  font-size: 40px;
+  padding-left: 27px;
+  padding-top: 100px;
+}
+
+.card1_h2 {
+  font-family: "Amiko";
+  font-style: normal;
+  font-size: 23px;
+  padding-left: 27px;
+  padding-top: 33px;
+}
+
+.card1_button {
+  max-width: 259px;
+  max-height: 100px;
+  margin-left: 27px;
+  margin-top: 40px;
+  padding: 0 60px;
+  box-shadow: 0px 6px 12px 0px #a1bd4d inset;
+  background-color: #a1bd4d;
+  color: #f6f6f6;
+  border-radius: 12px;
+  border: none;
+  text-align: center;
+  line-height: 60px;
+}
+
+.card2 {
+  margin-top: 23px;
+  margin-left: 17px;
+}
+.main {
+  display: flex;
+}

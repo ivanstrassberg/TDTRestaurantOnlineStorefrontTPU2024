@@ -1,0 +1,148 @@
+/* amiko-regular - latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "Amiko";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/amiko-v14-latin-regular.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: "Alumni Sans";
+  font-style: normal;
+  font-weight: 300;
+  src: url("../fonts/alumni-sans-v18-latin-300.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.header {
+  max-width: 1600px;
+  height: 136px;
+  box-shadow: 0px 5px 10px 0px #00000040;
+  display: flex;
+  justify-content: space-between;
+}
+
+.wrapper {
+  padding-top: 25px;
+  padding-left: 48px;
+  padding-right: 32px;
+}
+
+.logo {
+  font-size: 20px;
+}
+
+.info {
+  padding-top: 5px;
+  font-size: 45px;
+}
+
+.cart {
+  padding-top: 41px;
+  padding-right: 32px;
+  float: right;
+}
+
+.nav_bar {
+  padding-left: 156px;
+  margin-top: 55px;
+  font-size: 19px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.nav_list {
+  width: 670px;
+}
+
+.nav_item {
+  display: inline;
+  margin-right: 20px;
+}
+
+.header_link {
+  color: #282e14;
+  text-decoration: none;
+}
+
+.header_link:hover {
+  opacity: 0.7;
+}
+
+.rec_container {
+  margin-top: 27px;
+  padding-left: 48px;
+  padding-right: 33px;
+  display: flex;
+}
+
+.rec_card {
+  width: 700px;
+  height: 400px;
+  margin-right: 20px;
+  box-shadow: -1px 6px 12px 0px #00000040;
+  background: #f6f6f6;
+  border-radius: 12px;
+  display: flex;
+}
+
+.desc_rec {
+  padding-left: 40px;
+  padding-top: 110px;
+  padding-right: 42px;
+}
+
+.rec_h1 {
+  font-size: 17px;
+}
+
+.rec_h2 {
+  padding-top: 16px;
+  width: 183px;
+  font-size: 10px;
+}
+
+.rec_h3 {
+  padding-top: 13px;
+  font-size: 13px;
+}
+
+.rec_h4 {
+  font-size: 9px;
+  padding-bottom: 26px;
+}
+
+.add_cart {
+  font-size: 10px;
+  width: 151px;
+  height: 30px;
+  background-color: #a1bd4d;
+  color: #f6f6f6;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.add_cart:hover {
+  opacity: 0.8;
+}
+
+.rec_img {
+  width: 450px;
+  border-radius: 12px;
+}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/cart.css" />
+    <title>Cart</title>
+  </head>
+  <body>
+    <header class="header">
+      <!-- Шапка сайта -->
+      <div class="wrapper">
+        <div class="header_logo">
+          <a href="index.html" class="header_logo-link">
+            <img src="/img/Logo.svg" alt="NatureNook" />
+          </a>
+          <p class="naming">NatureNook</p>
+        </div>
+        <nav class="header_nav">
+          <ul class="header_list">
+            <li class="header_item">
+              <a href="about.html" class="header_link">О нас</a>
+            </li>
+            <li class="header_item">
+              <a href="catalogue.html" class="header_link">Каталог</a>
+            </li>
+            <li class="header_item">
+              <a href="promotions.html" class="header_link">Акции</a>
+            </li>
+            <li class="header_item">
+              <a href="delivery.html" class="header_link">Условия доставки</a>
+            </li>
+            <li class="header_item">
+              <a href="#5" class="header_link"> +7 899 432 55 38</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <main class="cart_main">
+      <div class="empty_cart" id="emptyCartMessage">
+        <!-- Сообщение о пустой корзине -->
+        <img src="img/bucket.svg" alt="cart_logo" class="logo_cart" />
+        <h1 class="empty_info">Корзина пока пуста</h1>
+        <h2 class="info_cart_mess">
+          Вернитесь в каталог или воспользуйтесь поиском, чтобы продолжить свои
+          покупки
+        </h2>
+        <a href="catalogue.html"
+          ><button class="button_cat">Смотреть каталог</button></a
+        >
+      </div>
+      <div id="cart-items" class="cart-items" style="display: none">
+        <!-- Здесь будут отображаться товары в корзине -->
+      </div>
+      <p id="total-price" class="total-price" style="display: none">
+        Общая стоимость: <span id="total"></span> ₽
+      </p>
+      <button id="clear-cart" class="clear-cart-button" style="display: none">
+        Очистить корзину
+      </button>
+      <button id="checkout" class="checkout-button" style="display: none">
+        Оформить заказ
+      </button>
+    </main>
+    <script src="js/cart.js"></script>
+  </body>
+</html>

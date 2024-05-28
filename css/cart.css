@@ -1,0 +1,144 @@
+/* cart.css */
+
+/* Fonts */
+@font-face {
+  font-display: swap;
+  font-family: "Amiko";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/amiko-v14-latin-regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Alumni Sans";
+  font-style: normal;
+  font-weight: 300;
+  src: url("../fonts/alumni-sans-v18-latin-300.woff2") format("woff2");
+}
+
+/* General Styles */
+html {
+  box-sizing: border-box;
+  background-color: #f6f6f6;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+/* Empty Cart Styles */
+.empty_cart {
+  max-width: 800px;
+  max-height: 700px;
+  padding-top: 248px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.empty_info {
+  padding-top: 12px;
+  font-size: 50px;
+}
+
+.info_cart_mess {
+  padding-top: 4px;
+  font-size: 14px;
+  padding-bottom: 44px;
+}
+
+.button_cat {
+  width: 259px;
+  height: 49px;
+  box-shadow: 0px 6px 12px 0px #a1bd4d inset;
+  background-color: #a1bd4d;
+  border-radius: 12px;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  padding: 10px 20px;
+}
+
+.button_cat:hover {
+  opacity: 0.8;
+}
+
+/* Cart Items Styles */
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0px 6px 12px 0px rgba(0, 0, 0, 0.1);
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.cart-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-item-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.cart-item-quantity {
+  color: #666;
+}
+
+.remove-item {
+  padding: 5px 10px;
+  background-color: #a1bd4d;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.remove-item:hover {
+  background-color: #8ea844;
+}
+
+.total-price {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.clear-cart-button,
+.checkout-button {
+  padding: 10px 20px;
+  background-color: #a1bd4d;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: block;
+  width: 200px;
+  margin: 0 auto 20px;
+  text-align: center;
+}
+
+.clear-cart-button:hover,
+.checkout-button:hover {
+  background-color: #8ea844;
+}

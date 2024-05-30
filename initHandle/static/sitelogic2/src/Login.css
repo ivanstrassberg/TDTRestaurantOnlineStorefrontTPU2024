@@ -1,4 +1,22 @@
 /* LoginForm.css */
+.register-link {
+  color: black;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.register-link:hover {
+  background-color: rgba(161, 189, 77, 0.1);
+  color: rgb(161, 189, 77);
+}
+
+.register-link:active {
+  background-color: rgba(161, 189, 77, 0.2);
+  color: rgb(161, 159, 67);
+}
 body {
     margin: 0;
     font-family: "Lato", sans-serif;

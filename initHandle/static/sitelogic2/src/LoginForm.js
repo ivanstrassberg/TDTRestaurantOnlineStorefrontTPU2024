@@ -10,7 +10,7 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-   
+  
     try {
       const response = await fetch('http://localhost:8080/login', {
         method: 'POST',
@@ -20,27 +20,36 @@ const LoginForm = () => {
         body: JSON.stringify({ email, password_hash }),
       });
   
-      // Check if the request method is POST to ensure it's not a preflight request
       if (response.ok) {
         const data = await response.json();
+        console.log('Data received:', data);
         localStorage.setItem('X-Authorization', data['X-Authorization']);
         localStorage.setItem('Authorization', data['Authorization']);
         localStorage.setItem('email', email);
+        console.log('Stored X-Authorization:', localStorage.getItem('X-Authorization'));
   
-        if (localStorage.getItem('X-Authorization') && localStorage.getItem('X-Authorization') !== '') {
+        // Check the value and type explicitly
+        const xAuth = localStorage.getItem('X-Authorization');
+        console.log('Type of X-Authorization:', typeof xAuth);
+        console.log('Value of X-Authorization:', xAuth);
+  
+        // Using a strict equality check to explicitly check for undefined and null
+        if (xAuth !== undefined && xAuth !== null && xAuth !== 'undefined') {
           setMessage('Login successful');
           navigate('/products');
         } else {
-          setMessage('Login failed: Invalid token received');
+          setMessage('Login failed: Wrong credentials');
         }
       } else {
-        const data = await response.json();
+        const data = await response.json(); 
         setMessage(`Login failed: ${data.message}`);
       }
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
+      setMessage(`Error: no connection`);
     }
   };
+  
+  
   
 
   return (
@@ -66,6 +75,7 @@ const LoginForm = () => {
         <button type="submit" className="login-button">Войти</button>
       </form>
       {message && <p className="message">{message}</p>}
+      <br></br>
       <Link to="/register" className="register-link">Впервые? Зарегистрируйтесь!</Link>
     </div>
   );

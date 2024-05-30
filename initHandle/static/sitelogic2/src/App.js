@@ -144,6 +144,10 @@ const Header = () => {
                         {/* <li><Link to="/register" onClick={() => setMobileMenuOpen(false)}>Register</Link></li> */}
                       </>
                     )}
+                    
+                    <li><Link to="/cart" onClick={() => setMobileMenuOpen(false)}>Корзина</Link></li>
+                    <li><Link to="/products" onClick={() => setMobileMenuOpen(false)}>Меню</Link></li>
+                    <br></br>
                     {isLoggedIn && (
                       <>
                         <li><Link to="/orders" onClick={() => setMobileMenuOpen(false)}>Заказы</Link></li>
@@ -156,8 +160,6 @@ const Header = () => {
                         </li>
                       </>
                     )}
-                    <li><Link to="/cart" onClick={() => setMobileMenuOpen(false)}>Корзина</Link></li>
-                    <li><Link to="/products" onClick={() => setMobileMenuOpen(false)}>Меню</Link></li>
                   </ul>
                   <form onSubmit={handleSearch} className="search-form">
                     <input

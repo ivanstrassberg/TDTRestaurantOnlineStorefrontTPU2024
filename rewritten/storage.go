@@ -291,6 +291,7 @@ func (s *PostgresStore) GetCartProducts(email string) ([]Product, error) {
 
 func (s *PostgresStore) RegisterCustomer(email string, password string) (bool, error) {
 	check, err := s.IfExists("customer", "email", email)
+	// fmt.Println(check, "storage check for if exists")
 	if err != nil {
 		return false, err
 	}

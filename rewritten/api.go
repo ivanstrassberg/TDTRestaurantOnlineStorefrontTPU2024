@@ -135,6 +135,7 @@ func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return err
 	}
+
 	// total, err := calculateTotal(productList)
 	total, err := calculateTotal(req, productList)
 	if err != nil {
@@ -142,7 +143,9 @@ func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error 
 		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
 	}
 	fmt.Println(total)
-	handleCreatePaymentIntent(w, r, total)
+	if err := handleCreatePaymentIntent(w, r, total); err == nil {
+
+	}
 
 	// }
 
@@ -365,14 +368,6 @@ func (s *APIServer) handleMain(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
-	if r.Method == http.MethodOptions {
-		(w).Header().Set("Access-Control-Allow-Origin", "*")
-		(w).Header().Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
-		(w).Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Authorization, X-Requested-With, email, Authorization")
-		(w).Header().Set("Access-Control-Allow-Credentials", "true")
-		w.WriteHeader(http.StatusOK)
-		return nil
-	}
 
 	if r.Method == "POST" {
 
@@ -390,10 +385,6 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		// check := CheckPasswordHash(regReq.PasswordHash, passDB)
 		fmt.Println(check)
 		// check := true
-		if !check {
-			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "nope"})
-			return nil
-		}
 		if check {
 			resp, err := s.store.LoginCustomer(regReq.Email, passDB)
 
@@ -401,24 +392,25 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 				WriteJSON(w, http.StatusBadRequest, ApiError{Error: "does not exist, or wrong password"})
 				return err
 			}
-			// fmt.Println(resp, "this is a response")
+			// fmt.Println(resp)
 			if resp {
 				token, err := generateJWT(regReq.Email)
 				if err != nil {
 					return err
 				}
 				// fmt.Println(token, "<- this mf dont wanna stick to header")
-				// w.Header().Set("X-Authorization", token)
-				// w.Header().Add("Authorization", "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo")
-				// fmt.Println(w.Header().Get("Authorization"))
+				w.Header().Set("X-Authorization", token)
+				w.Header().Add("Authorization", "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo")
+				fmt.Println(w.Header().Get("Authorization"))
 				WriteJSON(w, http.StatusOK, respData{
 					XAuth: token,
-					Auth:  "Bearer " + "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo",
+					// Auth:  "Bearer " + "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo",
+					Auth: "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo",
 				})
 				return nil
 			}
 		}
-		WriteJSON(w, http.StatusBadRequest, "something went wrong")
+		WriteJSON(w, http.StatusForbidden, ApiError{Error: "forbidden"})
 		return nil
 	}
 	return WriteJSON(w, http.StatusNotFound, "http method not supported")
@@ -443,11 +435,13 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 			return err
 		}
 		check := isCommonMailDomain(regReq.Email)
+		// fmt.Println(check, "check for common domain")
 		if regReq.Email == " " || !check {
-			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "wrong email format"})
+			WriteJSON(w, http.StatusBadRequest, 400)
 			return nil
 		}
 		v, err := s.store.RegisterCustomer(regReq.Email, ph)
+		// fmt.Println(v, "check whether user exists")
 		if err != nil {
 			return err
 		}
@@ -456,7 +450,8 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 				regReq.Email, "",
 			})
 		}
-		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "the email is already in use"})
+		WriteJSON(w, http.StatusBadRequest, 400)
+		fmt.Println("end")
 		return nil
 	}
 	// if r.Method == "DELETE" {
@@ -468,7 +463,7 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 	// 		fmt.Println(users[i])
 	// 	}
 	// }
-
+	WriteJSON(w, http.StatusBadRequest, 400)
 	return nil
 }
 

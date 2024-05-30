@@ -17,7 +17,7 @@ import (
 // 	// sc.Charges.Get("ch_3Ln3j02eZvKYlo2C0d5IZWuG", params)
 // }
 
-func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request, sum int64) {
+func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request, sum int64) error {
 	// if r.Method != "POST" {
 	// 	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 	// 	return
@@ -43,7 +43,7 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request, sum int64
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Printf("pi.New: %v", err)
-		return
+		return err
 	}
 
 	writeJSON(w, r, struct {
@@ -51,4 +51,5 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request, sum int64
 	}{
 		ClientSecret: pi.ClientSecret,
 	})
+	return nil
 }

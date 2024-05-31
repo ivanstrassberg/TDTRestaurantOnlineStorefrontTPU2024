@@ -1,7 +1,6 @@
 html {
   scroll-behavior: smooth;
   box-sizing: border-box;
-  
 }
 
 @media (max-width: 690px) {
@@ -13,18 +12,18 @@ html {
     display: flex;
   }
 }
+
 *,
 *::before,
 *::after {
   box-sizing: inherit;
-  
 }
+
 img {
   display: flex;
-  /* justify-content: center;
-  align-items: center; */
   width: 250px;
 }
+
 body {
   margin: 0;
   font-family: "Lato", sans-serif;
@@ -38,23 +37,21 @@ body {
   justify-content: space-around;
   min-height: 80px;
   background-color: #f6f6f6;
-  margin: 0 auto;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  /* width: max-content; */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .navbar .container {
   display: flex;
-  justify-content:space-between;
+  justify-content: space-between;
   align-items: center;
-  /* flex-shrink: 0; */
-  
 }
 
 .navbar-menu {
   list-style-type: none;
   padding-left: 0;
-  /* margin-bottom: 0; */
 }
 
 .navbar-menu li {
@@ -65,7 +62,6 @@ body {
   color: #282e14;
   opacity: 0.7;
   text-decoration: none;
-  /* padding: 20px; */
 }
 
 .navbar-menu li a:hover {
@@ -77,6 +73,7 @@ body {
   align-items: center;
   justify-content: center;
 }
+
 form {
   margin: 15px;
 }
@@ -90,6 +87,7 @@ form {
   display: flex;
   justify-content: center;
 }
+
 .card1 {
   box-shadow: -1px 6px 12px 0px #00000040;
   width: 586px;
@@ -97,17 +95,18 @@ form {
   margin-right: 17px;
   margin-top: 27px;
 }
+
 .card2 {
   width: 716px;
   height: 477px;
   margin-top: 26px;
 }
+
 .card-title {
   width: 625px;
   height: 117px;
   padding-top: 100px;
   padding-left: 27px;
-  margin-bottom: 260px;
   text-align: left;
   margin-bottom: 15px;
   font-family: "Alumni Sans", sans-serif;
@@ -138,12 +137,6 @@ form {
   font-weight: 400;
   font-size: 18px;
   color: #f6f6f6;
-}
-
-.header {
-  background-color: #f6f6f6;
-  padding: 20px 0;
-  width: 100%;
 }
 
 .navbar {
@@ -212,10 +205,9 @@ form {
   z-index: 100;
   backdrop-filter: blur(10px);
   width: calc(100% - 40px);
-  min-width: 300px; /* Set a minimum width */
+  min-width: 300px;
 }
 
-/* Specific adjustments for profile-dropdown */
 .profile-dropdown ul,
 .mobile-menu ul {
   list-style-type: none;
@@ -237,11 +229,9 @@ form {
   padding: 10px 20px;
   border-radius: 20px;
   width: 100%;
-  box-sizing: border;
-
+  box-sizing: border-box;
 }
 
-/* Mobile menu toggle button styles */
 .mobile-menu-toggle {
   display: none;
   align-items: center;
@@ -257,7 +247,6 @@ form {
   font-size: 24px;
 }
 
-/* Adjustments for mobile-menu */
 .mobile-menu {
   display: flex;
   flex-direction: column;
@@ -266,7 +255,6 @@ form {
 .logo {
   margin-bottom: 10px;
 }
-
 
 .search-form {
   display: flex;
@@ -311,7 +299,7 @@ form {
   top: 60px;
   right: 20px;
   background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   border-radius: 5px;
   padding: 10px;
   z-index: 100;
@@ -319,7 +307,6 @@ form {
   backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
-  /* margin-bottom: 10px; */
 }
 
 .logo {
@@ -335,7 +322,6 @@ form {
 .mobile-menu ul li {
   margin-bottom: 10px;
   text-decoration: none;
-
 }
 
 @media (max-width: 800px) {

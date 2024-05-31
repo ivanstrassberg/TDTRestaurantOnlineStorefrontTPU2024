@@ -63,6 +63,7 @@ func (s *APIServer) Run() {
 	mux.HandleFunc("/cart", withJWTauth(makeHTTPHandleFunc(s.handleCart)))
 	mux.HandleFunc("/payment", (makeHTTPHandleFunc(s.handlePayment)))
 	mux.HandleFunc("/config", (makeHTTPHandleFunc(s.handleConfig)))
+	mux.HandleFunc("/orders", (makeHTTPHandleFunc(s.handleOrder)))
 	mux.HandleFunc("/product/{id}", (makeHTTPHandleFunc(s.handleProductByID)))
 	mux.HandleFunc("/index", withJWTauth(makeHTTPHandleFunc(s.handleMain)))
 	mux.HandleFunc("/account/{id}", withJWTauth(makeHTTPHandleFunc(s.handleAccount)))
@@ -117,6 +118,11 @@ func (s *APIServer) handleConfig(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func (s *APIServer) handleOrder(w http.ResponseWriter, r *http.Request) error {
+	s.store.copyCartToOrders("ias114@tpu.ru", "ff")
+	return nil
+}
+
 func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error {
 	enableCors(&w, r)
 	// if r.Method == "POST" {
@@ -137,7 +143,7 @@ func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error 
 	}
 
 	// total, err := calculateTotal(productList)
-	total, err := calculateTotal(req, productList)
+	total, err := calculateTotal(req, productList, email)
 	if err != nil {
 		// fmt.Println("fucied")
 		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
@@ -671,13 +677,14 @@ func isCommonMailDomain(email string) bool {
 	return false
 }
 
-func calculateTotal(req []CheckoutReq, productList []Product) (int64, error) {
+func calculateTotal(req []CheckoutReq, productList []Product, email string) (int64, error) {
 	var total int64
 	// fmt.Println("before calcTotal")
 	fmt.Println(req, productList)
 	for i := 0; i < len(productList); i++ {
 		total += int64(productList[i].Price) * 100 * int64(req[i].Quantity)
 	}
+
 	return total, nil
 }
 

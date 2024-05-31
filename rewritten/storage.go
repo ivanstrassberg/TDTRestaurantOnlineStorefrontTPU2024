@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -24,6 +25,7 @@ type Storage interface {
 	IfExists(string, string, any) (bool, error)
 	AddCategory(string, string) error
 	SearchProducts(string) ([]DBEntity, error)
+	copyCartToOrders(string, string) error
 }
 
 type DBEntity interface{}
@@ -127,7 +129,9 @@ func (s *PostgresStore) Init() error {
 	s.createCartTable()
 	s.createCartProductJunctionTable()
 	s.createOrderTable()
-	s.createOrderProductJunctionTable()
+	s.createOrderFuncJSON()
+	s.createOrderFunc()
+	// s.createOrderProductJunctionTable()
 	fmt.Println("DB Initialized.")
 	// s.createConstraints()
 	return nil
@@ -147,6 +151,20 @@ func (s *PostgresStore) createProductTable() error { // todo add constraints to 
 	_, err := s.db.Exec(query)
 	return err
 }
+
+// func (s *PostgresStore) createOrderTable() error {
+// 	fd
+// 	query := `create table if not exists customer (
+// 		id serial primary key,
+// 		email varchar(100) not null unique,
+// 		password_hash varchar(120) not null,
+// 		delivery_address varchar(500) default 'none',
+// 		created_at timestamp default current_timestamp
+// 	)`
+
+// 	_, err := s.db.Exec(query)
+// 	return err
+// }
 
 func (s *PostgresStore) createCustomerTable() error { // todo add constraints to the cart
 	query := `create table if not exists customer (
@@ -224,14 +242,15 @@ func (s *PostgresStore) createCartProductJunctionTable() error {
 }
 
 func (s *PostgresStore) createOrderTable() error {
-	query := `create table if not exists customer_order (
-		id serial primary key, 
-		customer_id int not null default 0, 
-		foreign key (customer_id) references customer(id),
-		total decimal default 0.0, 
-		status int not null, 
-		is_cash boolean not null default FALSE,
-		created_at timestamp default current_timestamp
+	query := `CREATE TABLE IF NOT EXISTS customer_orders (
+		order_id SERIAL PRIMARY KEY,
+		customer_id INT NOT NULL,
+		cart_id INT NOT NULL,
+		product_id INT NOT NULL,
+		quantity INT NOT NULL,
+		order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (customer_id) REFERENCES customer(id),
+		FOREIGN KEY (product_id) REFERENCES product(id)	
 	);`
 	_, err := s.db.Exec(query)
 	if err != nil {
@@ -240,20 +259,130 @@ func (s *PostgresStore) createOrderTable() error {
 	return nil
 }
 
-func (s *PostgresStore) createOrderProductJunctionTable() error {
-	query := `CREATE TABLE if not exists order_product (
-		order_id int,  
-		product_id int,  
-		PRIMARY KEY (order_id, product_id),  
-		FOREIGN KEY (order_id) REFERENCES customer_order(id),  
-		FOREIGN KEY (product_id) REFERENCES product(id)  
-	);`
+func (s *PostgresStore) createOrderFunc() error { // has quantity 1 by default
+	query := `
+	CREATE OR REPLACE FUNCTION copy_cart_to_orders(uemail VARCHAR(50)) RETURNS VOID AS $$
+DECLARE
+    v_cart_id INT;
+    customer_id_user INT;
+    product RECORD;
+BEGIN
+    -- Retrieve customer_id from email
+    SELECT id INTO customer_id_user FROM customer WHERE email = uemail;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Customer not found for email: %', uemail;
+    END IF;
+
+    -- Retrieve cart_id using customer_id
+    SELECT id INTO v_cart_id FROM cart WHERE customer_id = customer_id_user;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Cart not found for customer_id: %', customer_id_user;
+    END IF;
+
+    -- Loop through cart_product and insert into customer_orders
+    FOR product IN 
+        SELECT product_id 
+        FROM cart_product 
+        WHERE cart_id = v_cart_id 
+    LOOP
+        INSERT INTO customer_orders (customer_id, cart_id, product_id, quantity)
+        VALUES (customer_id_user, v_cart_id, product.product_id, 1); -- Assuming quantity is 1 for simplicity
+    END LOOP;
+
+    -- Optionally, clear the cart after copying
+    -- DELETE FROM cart_product WHERE cart_id = v_cart_id;
+END;
+$$ LANGUAGE plpgsql;
+`
+
 	_, err := s.db.Exec(query)
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
+func (s *PostgresStore) createOrderFuncJSON() error { // has variable quantity
+	query := `
+	CREATE OR REPLACE FUNCTION copy_cart_to_orders_json(uemail VARCHAR(50), products jsonb) RETURNS VOID AS $$
+DECLARE
+    v_cart_id INT;
+    customer_id_user INT;
+    product_info jsonb;
+BEGIN
+    
+    SELECT id INTO customer_id_user FROM customer WHERE email = uemail;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Customer not found for email: %', uemail;
+    END IF;
+
+    SELECT id INTO v_cart_id FROM cart WHERE customer_id = customer_id_user;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Cart not found for customer_id: %', customer_id_user;
+    END IF;
+
+    FOREACH product_info IN ARRAY products
+    LOOP
+        INSERT INTO customer_orders (customer_id, cart_id, product_id, quantity)
+        VALUES (customer_id_user, v_cart_id, (product_info->>'product_id')::int, (product_info->>'quantity')::int);
+    END LOOP;
+
+    -- Optionally, clear the cart after copying
+    -- DELETE FROM cart_product WHERE cart_id = v_cart_id;
+END;
+$$ LANGUAGE plpgsql;
+`
+
+	_, err := s.db.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresStore) copyCartToOrders(email string, prosducts string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	products := `[{ "product_id": 9, "quantity": 10 }, { "product_id": 6, "quantity": 12 }]`
+	if err := s.copyCartToOrders(email, products); err != nil {
+		log.Fatalf("Failed to copy cart to orders: %v\n", err)
+	}
+	_, err = tx.Exec("SELECT copy_cart_to_orders_json($1,$2)", email, products)
+	if err != nil {
+		return fmt.Errorf("failed to execute copy_cart_to_orders: %w", err)
+	}
+
+	return nil
+}
+
+// func (s *PostgresStore) createOrderProductJunctionTable() error {
+// 	query := `CREATE TABLE if not exists order_product (
+// 		order_id int,
+// 		product_id int,
+// 		PRIMARY KEY (order_id, product_id),
+// 		FOREIGN KEY (order_id) REFERENCES customer_order(id),
+// 		FOREIGN KEY (product_id) REFERENCES product(id)
+// 	);`
+// 	_, err := s.db.Exec(query)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func (s *PostgresStore) GetCartProducts(email string) ([]Product, error) {
 	var cartID int

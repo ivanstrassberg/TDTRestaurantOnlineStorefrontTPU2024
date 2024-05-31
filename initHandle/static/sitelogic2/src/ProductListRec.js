@@ -1,84 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-const sliderStyle = {
-  width: '100%',
-  height: '50px',
-  // backgroundColor: '#f6f6f6',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  margin: '65px',
-  zIndex: 999,
-};
-
-const sliderButtonStyle = {
-  border: 'none',
-  backgroundColor: '#a1bd4d',
-  cursor: 'pointer',
-  padding: '5px 10px',
-  margin: '0 5px',
-  borderRadius: '5px',
-};
-
-function CategorySlider({ onChange }) {
-  const [selectedCategory, setSelectedCategory] = useState(null);
-
-  const handleSliderChange = (categoryId) => {
-    setSelectedCategory(categoryId);
-    onChange(categoryId);
-  };
-
-  const handleCancel = () => {
-    setSelectedCategory(null);
-    onChange(null);
-  };
-
-  const getEmoji = (categoryId) => {
-    switch (categoryId) {
-      case 1:
-        return '🍲';
-      case 2:
-        return '🥤';
-      case 3:
-        return '🍎';
-      default:
-        return '';
-    }
-  };
-
-  return (
-    <div style={sliderStyle}>
-      <button
-        style={sliderButtonStyle}
-        onClick={() => handleSliderChange(1)}
-      >
-        {selectedCategory === 1 ? '🍲' : 'Meals'}
-      </button>
-      <button
-        style={sliderButtonStyle}
-        onClick={() => handleSliderChange(2)}
-      >
-        {selectedCategory === 2 ? '🥤' : 'Drinks'}
-      </button>
-      <button
-        style={sliderButtonStyle}
-        onClick={() => handleSliderChange(3)}
-      >
-        {selectedCategory === 3 ? '🍎' : 'Fruits'}
-      </button>
-      <button
-        style={sliderButtonStyle}
-        onClick={handleCancel}
-      >
-        Cancel
-      </button>
-    </div>
-  );
-}
+// import CategorySlider from './CategorySlider'; // Import CategorySlider component
 
 const containerStyle = {
   display: 'flex',
@@ -88,7 +10,7 @@ const containerStyle = {
 };
 
 const cardStyle = {
-  flex: '1 0 calc(33.33% - 20px)', // Adjust flex-basis for large screens (3 items per row)
+  flex: '1 0 calc(33.33% - 20px)',
   maxWidth: '400px',
   margin: '10px',
   border: '1px solid #ddd',
@@ -114,7 +36,11 @@ const textContainerStyle = {
   flexDirection: 'column',
   justifyContent: 'space-between',
 };
+const h2Style = {
+  padding: '20px',
 
+  // marginRight: '20px',
+}
 const buttonStyle = {
   backgroundColor: '#a1bd4d',
   border: 'none',
@@ -168,7 +94,7 @@ function ProductCard({ product, inCart, onAddToCart }) {
   );
 }
 
-function ProductList() {
+function ProductListRec() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -226,24 +152,25 @@ function ProductList() {
     ? products.filter((product) => product.category_id === selectedCategory)
     : products;
 
+  const start = Math.floor(Math.random() * 15);
+  const end = Math.min(start + 2, filteredProducts.length);
+  const displayedProducts = filteredProducts.slice(start, end);
+    
   return (
     <div>
-      <CategorySlider
-            onChange={setSelectedCategory} 
-            />
-            <div style={containerStyle}>
-              {filteredProducts.map((product) => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product} 
-                  inCart={cart.includes(product.id)} 
-                  onAddToCart={handleAddToCart} 
-                />
-              ))}
-            </div>
-          </div>
-        );
-      }
-      
-      export default ProductList;
-      
+      <h2 style={h2Style}>Ваши персональные рекомендации</h2>
+      <div style={containerStyle}>
+        {displayedProducts.map((product) => (
+          <ProductCard 
+            key={product.id} 
+            product={product} 
+            inCart={cart.includes(product.id)} 
+            onAddToCart={handleAddToCart} 
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default ProductListRec;

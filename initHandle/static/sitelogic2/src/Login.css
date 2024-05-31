@@ -1,0 +1,85 @@
+/* LoginForm.css */
+.register-link {
+  color: black;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.register-link:hover {
+  background-color: rgba(161, 189, 77, 0.1);
+  color: rgb(161, 189, 77);
+}
+
+.register-link:active {
+  background-color: rgba(161, 189, 77, 0.2);
+  color: rgb(161, 159, 67);
+}
+body {
+    margin: 0;
+    font-family: "Lato", sans-serif;
+    font-weight: 400;
+  }
+  
+  .login-container {
+    text-align: center;
+    padding: 50px;
+    background-color: #f6f6f6;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    margin: 100px auto;
+    border-radius: 10px;
+  }
+  
+  .login-container h2 {
+    font-family: "Alumni Sans", sans-serif;
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  
+  .login-form {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+    text-align: left;
+  }
+  
+  .form-group label {
+    margin-right: 10px;
+    display: block;
+    font-weight: bold;
+  }
+  
+  .form-group input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  
+  .login-button {
+    width: calc(100% - 20px);
+    padding: 10px;
+    background-color:rgb(161, 189, 77);
+    color: #fff;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  
+  /* .login-button:hover {
+    background-color: rgb(161, 159, 67);
+  } */
+  
+  .message {
+    margin-top: 20px;
+    color: #d9534f;
+  }
+  

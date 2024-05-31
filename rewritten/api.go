@@ -63,6 +63,7 @@ func (s *APIServer) Run() {
 	mux.HandleFunc("/cart", withJWTauth(makeHTTPHandleFunc(s.handleCart)))
 	mux.HandleFunc("/payment", (makeHTTPHandleFunc(s.handlePayment)))
 	mux.HandleFunc("/config", (makeHTTPHandleFunc(s.handleConfig)))
+	mux.HandleFunc("/orders", (makeHTTPHandleFunc(s.handleOrder)))
 	mux.HandleFunc("/product/{id}", (makeHTTPHandleFunc(s.handleProductByID)))
 	mux.HandleFunc("/index", withJWTauth(makeHTTPHandleFunc(s.handleMain)))
 	mux.HandleFunc("/account/{id}", withJWTauth(makeHTTPHandleFunc(s.handleAccount)))
@@ -117,6 +118,11 @@ func (s *APIServer) handleConfig(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func (s *APIServer) handleOrder(w http.ResponseWriter, r *http.Request) error {
+	s.store.copyCartToOrders("ias114@tpu.ru", "ff")
+	return nil
+}
+
 func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error {
 	enableCors(&w, r)
 	// if r.Method == "POST" {
@@ -135,14 +141,17 @@ func (s *APIServer) handlePayment(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return err
 	}
+
 	// total, err := calculateTotal(productList)
-	total, err := calculateTotal(req, productList)
+	total, err := calculateTotal(req, productList, email)
 	if err != nil {
 		// fmt.Println("fucied")
 		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "cart handle failure"})
 	}
 	fmt.Println(total)
-	handleCreatePaymentIntent(w, r, total)
+	if err := handleCreatePaymentIntent(w, r, total); err == nil {
+
+	}
 
 	// }
 
@@ -372,14 +381,6 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		if err := json.NewDecoder(r.Body).Decode(regReq); err != nil {
 			return err
 		}
-		// password, err := HashPassword(regReq.PasswordHash)
-		// if err != nil {
-		// 	return err
-		// }
-		// fmt.Println(regReq.Email, password)
-		// hashed, err := HashPassword(regReq.PasswordHash)
-		// todo rework that, return the password, then de-hash and compare
-		//  confirm if all good
 		passDB, err := s.store.GetPassword(regReq.Email)
 		if err != nil {
 			return err
@@ -409,12 +410,13 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 				fmt.Println(w.Header().Get("Authorization"))
 				WriteJSON(w, http.StatusOK, respData{
 					XAuth: token,
-					Auth:  "Bearer " + "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo",
+					// Auth:  "Bearer " + "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo",
+					Auth: "sk_test_51PGBY6RsvEv5vPVlSr7KscWnARE1JSwq2Yuz6EqrYxs0Ksx6d8l1Uum5O5HUXj1rK8Hb2btsUvljijPxxAZQjTbk00bx8sBvRo",
 				})
 				return nil
 			}
 		}
-		WriteJSON(w, http.StatusBadRequest, "something went wrong")
+		WriteJSON(w, http.StatusForbidden, ApiError{Error: "forbidden"})
 		return nil
 	}
 	return WriteJSON(w, http.StatusNotFound, "http method not supported")
@@ -439,11 +441,13 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 			return err
 		}
 		check := isCommonMailDomain(regReq.Email)
+		// fmt.Println(check, "check for common domain")
 		if regReq.Email == " " || !check {
-			WriteJSON(w, http.StatusBadRequest, ApiError{Error: "wrong email format"})
+			WriteJSON(w, http.StatusBadRequest, 400)
 			return nil
 		}
 		v, err := s.store.RegisterCustomer(regReq.Email, ph)
+		// fmt.Println(v, "check whether user exists")
 		if err != nil {
 			return err
 		}
@@ -452,7 +456,8 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 				regReq.Email, "",
 			})
 		}
-		WriteJSON(w, http.StatusBadRequest, ApiError{Error: "the email is already in use"})
+		WriteJSON(w, http.StatusBadRequest, 400)
+		fmt.Println("end")
 		return nil
 	}
 	// if r.Method == "DELETE" {
@@ -464,7 +469,7 @@ func (s *APIServer) handleRegister(w http.ResponseWriter, r *http.Request) error
 	// 		fmt.Println(users[i])
 	// 	}
 	// }
-
+	WriteJSON(w, http.StatusBadRequest, 400)
 	return nil
 }
 
@@ -566,7 +571,7 @@ func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 		// fmt.Println(tokenString)
 		token, err := validateJWT(tokenString)
 		if err != nil {
-			fmt.Println("yeah not authorized")
+			// fmt.Println("yeah not authorized")
 			WriteJSON(w, http.StatusUnauthorized, ApiError{Error: "forbidden"})
 			return
 		}
@@ -591,6 +596,7 @@ func withJWTauth(handleFunc http.HandlerFunc) http.HandlerFunc {
 func withJWTauthAdmin(handleFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		enableCors(&w, r)
+
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -671,13 +677,14 @@ func isCommonMailDomain(email string) bool {
 	return false
 }
 
-func calculateTotal(req []CheckoutReq, productList []Product) (int64, error) {
+func calculateTotal(req []CheckoutReq, productList []Product, email string) (int64, error) {
 	var total int64
 	// fmt.Println("before calcTotal")
 	fmt.Println(req, productList)
 	for i := 0; i < len(productList); i++ {
 		total += int64(productList[i].Price) * 100 * int64(req[i].Quantity)
 	}
+
 	return total, nil
 }
 
